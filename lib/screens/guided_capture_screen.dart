@@ -60,7 +60,7 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        _instruction,
+                        appState.claimData.damageType.captureGuidance,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,

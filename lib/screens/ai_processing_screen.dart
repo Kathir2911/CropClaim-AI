@@ -52,6 +52,7 @@ class _AIProcessingScreenState extends State<AIProcessingScreen>
       cropType: appState.claimData.cropType,
       imageCount: appState.capturedImages.length,
       totalAreaAcres: appState.claimData.landArea,
+      damageType: appState.claimData.damageType, // Pass damage type
     );
 
     appState.setAIResult(result);

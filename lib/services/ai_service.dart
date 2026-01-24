@@ -1,82 +1,125 @@
 import 'dart:math';
 import '../models/ai_result.dart';
+import '../models/claim_data.dart';
+import '../models/damage_type.dart';
 
 class AIService {
   static final Random _random = Random();
 
-  // Mock crop types
-  static const Map<String, List<String>> cropDiseases = {
-    'Rice': [
-      'Bacterial Leaf Blight',
-      'Brown Spot',
-      'Blast Disease',
-      'Sheath Blight',
-    ],
-    'Wheat': [
-      'Rust (Yellow/Brown/Black)',
-      'Powdery Mildew',
-      'Smut',
-      'Leaf Blight',
-    ],
-    'Cotton': [
-      'Bacterial Blight',
-      'Alternaria Leaf Spot',
-      'Anthracnose',
-      'Fusarium Wilt',
-    ],
-    'Sugarcane': ['Red Rot', 'Smut', 'Wilt', 'Grassy Shoot Disease'],
-    'Maize': [
-      'Common Rust',
-      'Northern Corn Leaf Blight',
-      'Southern Corn Leaf Blight',
-      'Downy Mildew',
-    ],
-  };
-
-  // Mock AI analysis
+  // Mock AI analysis - adapts based on damage type
   static Future<AIResult> analyzeCropDamage({
     required String cropType,
     required int imageCount,
     required double totalAreaAcres,
+    required DamageType damageType, // New parameter
   }) async {
     // Simulate AI processing delay
     await Future.delayed(const Duration(seconds: 3));
 
-    // Get random disease for the crop
-    List<String> diseases = cropDiseases[cropType] ?? ['Unknown Disease'];
-    String diseaseName = diseases[_random.nextInt(diseases.length)];
+    final isDiseaseType = damageType == DamageType.disease;
 
-    // Generate mock confidence (80-95%)
-    double confidence = 0.80 + _random.nextDouble() * 0.15;
+    if (isDiseaseType) {
+      // Disease detection logic
+      final diseases = _getCropDiseases(cropType);
+      final diseaseName = diseases[_random.nextInt(diseases.length)];
+      final confidence = 0.80 + _random.nextDouble() * 0.15;
 
-    // Generate mock damage assessment
-    double areaAffected =
-        totalAreaAcres *
-        (0.10 + _random.nextDouble() * 0.40); // 10-50% area affected
-    double avgDamage =
-        40 +
-        _random.nextDouble() * 50; // 40-90% average damage in affected area
-    double overallLoss =
-        (areaAffected / totalAreaAcres) * avgDamage; // Overall field loss
+      final areaAffected =
+          totalAreaAcres * (0.10 + _random.nextDouble() * 0.40);
+      final avgDamage = 40 + _random.nextDouble() * 50;
+      final overallLoss = (areaAffected / totalAreaAcres) * avgDamage;
 
-    return AIResult(
-      detectedCrop: cropType,
-      disease: DiseaseDetection(
-        diseaseName: diseaseName,
-        confidence: confidence,
-        description: _getDiseaseDescription(diseaseName),
-      ),
-      damage: DamageAssessment(
-        areaAffectedAcres: areaAffected,
-        totalAreaAcres: totalAreaAcres,
-        averageDamagePercentage: avgDamage,
-        overallFieldLossPercentage: overallLoss,
-      ),
-    );
+      return AIResult(
+        detectedCrop: cropType,
+        disease: DiseaseDetection(
+          diseaseName: diseaseName,
+          confidence: confidence,
+          description: _getDiseaseDescription(diseaseName),
+        ),
+        damage: DamageAssessment(
+          areaAffectedAcres: areaAffected,
+          totalAreaAcres: totalAreaAcres,
+          averageDamagePercentage: avgDamage,
+          overallFieldLossPercentage: overallLoss,
+        ),
+      );
+    } else {
+      // Natural disaster damage assessment
+      String severityLevel;
+      double damagePercent;
+
+      switch (damageType) {
+        case DamageType.flood:
+          damagePercent = 60 + _random.nextDouble() * 20; // 60-80%
+          severityLevel = damagePercent > 70 ? 'Severe' : 'Medium';
+          break;
+        case DamageType.drought:
+          damagePercent = 50 + _random.nextDouble() * 25; // 50-75%
+          severityLevel = damagePercent > 65 ? 'Severe' : 'Medium';
+          break;
+        case DamageType.cyclone:
+          damagePercent = 65 + _random.nextDouble() * 25; // 65-90%
+          severityLevel = 'Severe';
+          break;
+        case DamageType.hailstorm:
+          damagePercent = 55 + _random.nextDouble() * 20; // 55-75%
+          severityLevel = damagePercent > 65 ? 'Severe' : 'Medium';
+          break;
+        default:
+          damagePercent = 50.0;
+          severityLevel = 'Low';
+      }
+
+      final areaAffected = totalAreaAcres * (damagePercent / 100);
+      final overallLoss = damagePercent * 0.85;
+
+      return AIResult(
+        detectedCrop: cropType,
+        disease: null, // No disease for disasters
+        damage: DamageAssessment(
+          areaAffectedAcres: areaAffected,
+          totalAreaAcres: totalAreaAcres,
+          averageDamagePercentage: damagePercent,
+          overallFieldLossPercentage: overallLoss,
+          severityLevel: severityLevel,
+        ),
+      );
+    }
+  }
+
+  static List<String> _getCropDiseases(String cropType) {
+    const cropDiseases = {
+      'Rice': [
+        'Bacterial Leaf Blight',
+        'Brown Spot',
+        'Blast Disease',
+        'Sheath Blight',
+      ],
+      'Wheat': [
+        'Rust (Yellow/Brown/Black)',
+        'Powdery Mildew',
+        'Smut',
+        'Leaf Blight',
+      ],
+      'Cotton': [
+        'Bacterial Blight',
+        'Alternaria Leaf Spot',
+        'Anthracnose',
+        'Fusarium Wilt',
+      ],
+      'Sugarcane': ['Red Rot', 'Smut', 'Wilt', 'Grassy Shoot Disease'],
+      'Maize': [
+        'Common Rust',
+        'Northern Corn Leaf Blight',
+        'Southern Corn Leaf Blight',
+        'Downy Mildew',
+      ],
+    };
+    return cropDiseases[cropType] ?? ['Unknown Disease'];
   }
 
   static String _getDiseaseDescription(String diseaseName) {
-    final descriptions = {
+    const descriptions = {
       'Bacterial Leaf Blight':
           'Water-soaked lesions on leaves, leading to wilting and drying',
       'Brown Spot': 'Brown oval spots on leaves, reducing photosynthesis',

@@ -3,6 +3,7 @@ import '../models/user_mode.dart';
 import '../models/claim_data.dart';
 import '../models/ai_result.dart';
 import '../models/auth_models.dart';
+import '../models/submitted_claim.dart';
 
 class AppState extends ChangeNotifier {
   // User session
@@ -32,6 +33,11 @@ class AppState extends ChangeNotifier {
   // PMFBY calculation
   PMFBYCalculation? _pmfbyCalculation;
   PMFBYCalculation? get pmfbyCalculation => _pmfbyCalculation;
+
+  // Submitted claims history
+  final List<SubmittedClaim> _submittedClaims = [];
+  List<SubmittedClaim> get submittedClaims =>
+      List.unmodifiable(_submittedClaims);
 
   // Authentication state
   AuthState _authState = AuthState.unauthenticated;
@@ -121,13 +127,86 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ✅ PROMPT 2: Proper Logout Functionality
   void logout() {
-    _authState = AuthState.unauthenticated;
+    // Clear all authentication state
     _farmerAuth = null;
     _operatorAuth = null;
     _agentAuth = null;
     _userSession = null;
-    resetClaim();
+    _authState = AuthState.unauthenticated;
+
+    // Clear claim data (optional - removes in-progress claims)
+    _claimData = ClaimData();
+    _fieldBoundary = null;
+    _capturedImages = [];
+    _aiResult = null;
+    _pmfbyCalculation = null;
+
     notifyListeners();
   }
+
+  // Helper method to check if user has specific role
+  bool hasRole(UserMode role) {
+    return _userSession?.mode == role;
+  }
+
+  // Helper to check if user can access management features
+  bool get canManageRequests {
+    return hasRole(UserMode.cscOperator) || hasRole(UserMode.insuranceAgent);
+  }
+
+  // Get current user's role display name
+  String? get currentRoleDisplay {
+    switch (_userSession?.mode) {
+      case UserMode.farmer:
+        return 'Farmer';
+      case UserMode.cscOperator:
+        return 'CSC / PACS Operator';
+      case UserMode.insuranceAgent:
+        return 'Insurance Agent';
+      default:
+        return null;
+    }
+  }
+
+  // Submit claim and save to history
+  void submitClaim() {
+    // Generate claim ID
+    final claimId = 'CLM${DateTime.now().millisecondsSinceEpoch}';
+
+    // Create submitted claim
+    final submittedClaim = SubmittedClaim(
+      claimId: claimId,
+      submittedAt: DateTime.now(),
+      claimData: _claimData,
+      aiResult: _aiResult,
+      calculation: _pmfbyCalculation,
+      status: 'Submitted',
+    );
+
+    // Add to history
+    _submittedClaims.insert(
+      0,
+      submittedClaim,
+    ); // Add to beginning for newest first
+
+    // Clear current claim data for next claim
+    _claimData = ClaimData();
+    _fieldBoundary = null;
+    _capturedImages = [];
+    _aiResult = null;
+    _pmfbyCalculation = null;
+
+    notifyListeners();
+  }
+}
+
+enum AuthState { unauthenticated, authenticated }
+
+class UserSession {
+  final UserMode mode;
+  final String? operatorId;
+
+  UserSession({required this.mode, this.operatorId});
 }

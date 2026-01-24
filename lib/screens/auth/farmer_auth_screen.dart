@@ -279,7 +279,7 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
       });
 
       // Navigate to claim details
-      Navigator.pushReplacementNamed(context, '/claim-details');
+      Navigator.pushReplacementNamed(context, '/profile');
     }
   }
 

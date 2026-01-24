@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/claim_data.dart';
+import '../models/damage_type.dart';
 import '../providers/app_state.dart';
 import '../services/gps_service.dart';
+import '../widgets/app_drawer.dart';
+import '../widgets/auth_header.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/header_widget.dart';
-import '../widgets/auth_header.dart';
 
 class ClaimDetailsScreen extends StatefulWidget {
   const ClaimDetailsScreen({super.key});
@@ -49,8 +51,11 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final appState = Provider.of<AppState>(context);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Claim Details')),
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -64,6 +69,40 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
               ),
 
               const SizedBox(height: 24),
+
+              // Cause of Crop Damage - NEW DROPDOWN
+              DropdownButtonFormField<DamageType>(
+                value: appState.claimData.damageType,
+                decoration: const InputDecoration(
+                  labelText: 'Cause of Crop Damage *',
+                  hintText: 'Select damage type',
+                  prefixIcon: Icon(Icons.warning_amber_rounded),
+                ),
+                items: DamageType.values.map((type) {
+                  return DropdownMenuItem(
+                    value: type,
+                    child: Text(type.displayName),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    // Get appState from Provider
+                    Provider.of<AppState>(
+                      context,
+                      listen: false,
+                    ).claimData.damageType = value;
+                    setState(() {}); // Rebuild to show new value
+                  }
+                },
+                validator: (value) {
+                  if (value == null) {
+                    return 'Please select damage type';
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 16),
 
               // Farmer Name
               TextFormField(

@@ -5,6 +5,7 @@ import '../services/gps_service.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/header_widget.dart';
 import '../widgets/mock_map_view.dart';
+import '../widgets/app_drawer.dart';
 import '../theme/app_theme.dart';
 
 class FieldBoundaryScreen extends StatefulWidget {
@@ -24,6 +25,7 @@ class _FieldBoundaryScreenState extends State<FieldBoundaryScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Field Boundary')),
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),

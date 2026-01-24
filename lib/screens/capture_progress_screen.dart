@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/header_widget.dart';
 import '../widgets/mock_map_view.dart';
+import '../widgets/app_drawer.dart';
 
 class CaptureProgressScreen extends StatelessWidget {
   const CaptureProgressScreen({super.key});
@@ -19,6 +20,7 @@ class CaptureProgressScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Capture Progress')),
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),

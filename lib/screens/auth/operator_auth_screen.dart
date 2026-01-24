@@ -295,7 +295,7 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
       });
 
       // Navigate to claim details
-      Navigator.pushReplacementNamed(context, '/claim-details');
+      Navigator.pushReplacementNamed(context, '/profile');
     }
   }
 

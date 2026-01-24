@@ -375,7 +375,7 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
       });
 
       // Navigate to claim details
-      Navigator.pushReplacementNamed(context, '/claim-details');
+      Navigator.pushReplacementNamed(context, '/profile');
     }
   }
 

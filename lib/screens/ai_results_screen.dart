@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/header_widget.dart';
 import '../widgets/mock_annotated_image.dart';
+import '../widgets/app_drawer.dart';
 
 class AIResultsScreen extends StatelessWidget {
   const AIResultsScreen({super.key});
@@ -24,6 +25,7 @@ class AIResultsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Analysis Results')),
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24.0),
@@ -104,7 +106,7 @@ class AIResultsScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                disease.diseaseName,
+                                disease!.diseaseName,
                                 style: Theme.of(context)
                                     .textTheme
                                     .headlineMedium
@@ -112,7 +114,7 @@ class AIResultsScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                disease.description,
+                                disease!.description,
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             ],
@@ -136,11 +138,11 @@ class AIResultsScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
                               LinearProgressIndicator(
-                                value: disease.confidence,
+                                value: disease!.confidence,
                                 minHeight: 12,
                                 backgroundColor: Colors.grey.shade300,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  disease.confidence >= 0.85
+                                  disease!.confidence >= 0.85
                                       ? AppTheme.successColor
                                       : AppTheme.warningColor,
                                 ),
@@ -150,10 +152,10 @@ class AIResultsScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 16),
                         Text(
-                          '${(disease.confidence * 100).toStringAsFixed(0)}%',
+                          '${(disease!.confidence * 100).toStringAsFixed(0)}%',
                           style: Theme.of(context).textTheme.displaySmall
                               ?.copyWith(
-                                color: disease.confidence >= 0.85
+                                color: disease!.confidence >= 0.85
                                     ? AppTheme.successColor
                                     : AppTheme.warningColor,
                               ),
@@ -181,7 +183,7 @@ class AIResultsScreen extends StatelessWidget {
                   ),
                   MockAnnotatedImage(
                     cropType: aiResult.detectedCrop,
-                    disease: disease.diseaseName,
+                    disease: disease?.diseaseName ?? 'N/A',
                   ),
                 ],
               ),

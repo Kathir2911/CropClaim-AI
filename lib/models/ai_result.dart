@@ -1,11 +1,11 @@
 class AIResult {
   final String detectedCrop;
-  final DiseaseDetection disease;
+  final DiseaseDetection? disease; // Nullable for disaster damage
   final DamageAssessment damage;
 
   AIResult({
     required this.detectedCrop,
-    required this.disease,
+    this.disease, // Optional - null for natural disasters
     required this.damage,
   });
 }
@@ -27,12 +27,14 @@ class DamageAssessment {
   final double totalAreaAcres;
   final double averageDamagePercentage;
   final double overallFieldLossPercentage;
+  final String? severityLevel; // New: Low/Medium/Severe for disasters
 
   DamageAssessment({
     required this.areaAffectedAcres,
     required this.totalAreaAcres,
     required this.averageDamagePercentage,
     required this.overallFieldLossPercentage,
+    this.severityLevel,
   });
 }
 

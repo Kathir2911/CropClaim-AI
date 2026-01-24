@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:intl/intl.dart';
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_drawer.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/header_widget.dart';
 
@@ -30,6 +31,7 @@ class ClaimReportScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Claim Report')),
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           children: [
@@ -132,12 +134,12 @@ class ClaimReportScreen extends StatelessWidget {
                           ),
                           _InfoRow(
                             label: 'Disease Detected',
-                            value: aiResult?.disease.diseaseName ?? 'N/A',
+                            value: aiResult?.disease?.diseaseName ?? 'N/A',
                           ),
                           _InfoRow(
                             label: 'Confidence',
                             value: aiResult != null
-                                ? '${(aiResult.disease.confidence * 100).toStringAsFixed(0)}%'
+                                ? '${(aiResult.disease!.confidence * 100).toStringAsFixed(0)}%'
                                 : 'N/A',
                           ),
                           _InfoRow(
@@ -358,6 +360,10 @@ class ClaimReportScreen extends StatelessWidget {
   }
 
   void _submitClaim(BuildContext context) {
+    // Save claim to history
+    final appState = Provider.of<AppState>(context, listen: false);
+    appState.submitClaim();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -375,8 +381,13 @@ class ClaimReportScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).popUntil((route) => route.isFirst);
+              Navigator.of(context).pop(); // Close dialog
+              // Return to profile page instead of mode selection
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/profile',
+                (route) => false,
+              );
             },
             child: const Text('OK'),
           ),

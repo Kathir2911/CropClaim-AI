@@ -1,9 +1,17 @@
+import 'damage_type.dart';
+
 class ClaimData {
   String farmerName;
   String policyId;
   String cropType;
   double landArea;
   String village;
+  String? district;
+  String? state;
+  String? season;
+  String? year;
+  String? incidentType;
+  DamageType damageType; // New field for damage type
 
   ClaimData({
     this.farmerName = '',
@@ -11,7 +19,16 @@ class ClaimData {
     this.cropType = '',
     this.landArea = 0.0,
     this.village = '',
+    this.district,
+    this.state,
+    this.season,
+    this.year,
+    this.incidentType,
+    this.damageType = DamageType.disease, // Default to disease
   });
+
+  /// Returns damage category: Disease or Natural Calamity
+  String get damageCategory => damageType.category;
 }
 
 class FieldBoundary {
