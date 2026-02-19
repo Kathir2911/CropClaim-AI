@@ -1,9 +1,11 @@
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import '../models/user_mode.dart';
 import '../models/claim_data.dart';
 import '../models/ai_result.dart';
 import '../models/auth_models.dart';
 import '../models/submitted_claim.dart';
+import '../services/supabase_service.dart';
 
 class AppState extends ChangeNotifier {
   // User session
@@ -75,8 +77,8 @@ class AppState extends ChangeNotifier {
 
   void setFieldBoundary(FieldBoundary boundary) {
     _fieldBoundary = boundary;
-    // Calculate required captures: 1 per 2 acres, minimum 10
-    _requiredCaptureCount = ((boundary.areaInAcres / 2).ceil()).clamp(10, 100);
+    // Required Images = max(3, ceil(total_acres / 2))
+    _requiredCaptureCount = max(3, (boundary.areaInAcres / 2).ceil());
     notifyListeners();
   }
 
@@ -170,7 +172,7 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // Submit claim and save to history
+  // Submit claim and save to history + Supabase
   void submitClaim() {
     // Generate claim ID
     final claimId = 'CLM${DateTime.now().millisecondsSinceEpoch}';
@@ -185,11 +187,11 @@ class AppState extends ChangeNotifier {
       status: 'Submitted',
     );
 
-    // Add to history
-    _submittedClaims.insert(
-      0,
-      submittedClaim,
-    ); // Add to beginning for newest first
+    // Add to local history
+    _submittedClaims.insert(0, submittedClaim);
+
+    // Save to Supabase database
+    _saveToSupabase(claimId);
 
     // Clear current claim data for next claim
     _claimData = ClaimData();
@@ -200,13 +202,38 @@ class AppState extends ChangeNotifier {
 
     notifyListeners();
   }
-}
 
-enum AuthState { unauthenticated, authenticated }
+  /// Save claim data to Supabase (non-blocking)
+  Future<void> _saveToSupabase(String claimId) async {
+    try {
+      // Collect image URLs from captured images
+      final imageUrls = _capturedImages
+          .map((c) => c.imagePath)
+          .where((p) => p.startsWith('http'))
+          .toList();
 
-class UserSession {
-  final UserMode mode;
-  final String? operatorId;
+      // Collect GPS coordinates
+      final gpsCoords = _capturedImages
+          .map((c) => {'lat': c.location.latitude, 'lng': c.location.longitude})
+          .toList();
 
-  UserSession({required this.mode, this.operatorId});
+      await SupabaseService.saveClaim(
+        claimId: claimId,
+        farmerName: _claimData.farmerName,
+        policyId: _claimData.policyId,
+        cropType: _claimData.cropType,
+        landArea: _claimData.landArea,
+        village: _claimData.village,
+        damageType: _claimData.damageType.displayName,
+        damageCategory: _claimData.damageCategory,
+        imageUrls: imageUrls,
+        gpsCoordinates: gpsCoords,
+        aiSeverity: _aiResult?.damage.averageDamagePercentage,
+        aiFinding:
+            _aiResult?.disease?.diseaseName ?? _aiResult?.damage.severityLevel,
+      );
+    } catch (e) {
+      debugPrint('Supabase save error: $e');
+    }
+  }
 }

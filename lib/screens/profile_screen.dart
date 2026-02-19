@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_drawer.dart';
 
@@ -12,10 +14,12 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Profile'),
+        title: Text(t.get('my_profile')),
         backgroundColor: AppTheme.accentColor,
       ),
       drawer: const AppDrawer(),
@@ -23,78 +27,101 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           // User Info Card
-          _buildUserInfoCard(appState),
+          _buildUserInfoCard(appState, t),
           const SizedBox(height: 24),
 
           // Quick Actions
-          _buildQuickActions(context, appState),
+          _buildQuickActions(context, appState, t),
           const SizedBox(height: 24),
 
           // Recent Activity (if applicable)
-          if (appState.canManageRequests) _buildManagementSection(context),
+          if (appState.canManageRequests) _buildManagementSection(context, t),
         ],
       ),
     );
   }
 
-  Widget _buildUserInfoCard(AppState appState) {
-    String userName = 'User';
-    String userRole = 'Guest';
+  Widget _buildUserInfoCard(AppState appState, AppLocalizations t) {
+    String userName = t.get('user_label');
+    String userRole = t.get('guest');
     List<InfoRow> userDetails = [];
 
-    // Build user info based on role
     if (appState.farmerAuth != null) {
       final auth = appState.farmerAuth!;
-      userName = 'Farmer';
-      userRole = 'PMFBY Beneficiary';
+      userName = t.get('farmer');
+      userRole = t.get('pmfby_beneficiary');
       userDetails = [
-        InfoRow(icon: Icons.phone, label: 'Mobile', value: auth.mobile),
+        InfoRow(
+          icon: Icons.phone,
+          label: t.get('mobile_label'),
+          value: auth.mobile,
+        ),
         InfoRow(
           icon: Icons.badge,
-          label: 'Aadhaar',
+          label: t.get('aadhaar_label'),
           value: _maskAadhaar(auth.aadhaar),
         ),
         if (auth.policyId != null)
           InfoRow(
             icon: Icons.policy,
-            label: 'Policy ID',
+            label: t.get('policy_id'),
             value: auth.policyId!,
           ),
         InfoRow(
           icon: Icons.calendar_today,
-          label: 'Registered',
+          label: t.get('registered_label'),
           value: _formatDate(auth.authenticatedAt),
         ),
       ];
     } else if (appState.operatorAuth != null) {
       final auth = appState.operatorAuth!;
       userName = auth.operatorName;
-      userRole = 'CSC / PACS Operator';
+      userRole = t.get('operator');
       userDetails = [
-        InfoRow(icon: Icons.badge, label: 'Operator ID', value: auth.cscId),
-        InfoRow(icon: Icons.business, label: 'Center', value: auth.centerName),
-        InfoRow(icon: Icons.phone, label: 'Mobile', value: auth.mobile),
+        InfoRow(
+          icon: Icons.badge,
+          label: t.get('operator_id'),
+          value: auth.cscId,
+        ),
+        InfoRow(
+          icon: Icons.business,
+          label: t.get('center_label'),
+          value: auth.centerName,
+        ),
+        InfoRow(
+          icon: Icons.phone,
+          label: t.get('mobile_label'),
+          value: auth.mobile,
+        ),
         InfoRow(
           icon: Icons.calendar_today,
-          label: 'Login Time',
+          label: t.get('login_time'),
           value: _formatDate(auth.authenticatedAt),
         ),
       ];
     } else if (appState.agentAuth != null) {
       final auth = appState.agentAuth!;
       userName = auth.agentName;
-      userRole = 'Insurance Agent / Krushi Sahayak';
+      userRole = t.get('krushi_sahayak');
       userDetails = [
-        InfoRow(icon: Icons.badge, label: 'Agent ID', value: auth.agentId),
-        InfoRow(icon: Icons.phone, label: 'Mobile', value: auth.mobile),
+        InfoRow(
+          icon: Icons.badge,
+          label: t.get('agent_id_label'),
+          value: auth.agentId,
+        ),
+        InfoRow(
+          icon: Icons.phone,
+          label: t.get('mobile_label'),
+          value: auth.mobile,
+        ),
         InfoRow(
           icon: Icons.verified_user,
-          label: 'Audit Status',
-          value: auth.auditEnabled ? 'Enabled' : 'Disabled',
+          label: t.get('audit_status'),
+          value: auth.auditEnabled ? t.get('enabled') : t.get('disabled'),
         ),
         InfoRow(
           icon: Icons.calendar_today,
-          label: 'Login Time',
+          label: t.get('login_time'),
           value: _formatDate(auth.authenticatedAt),
         ),
       ];
@@ -208,12 +235,16 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context, AppState appState) {
+  Widget _buildQuickActions(
+    BuildContext context,
+    AppState appState,
+    AppLocalizations t,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Quick Actions',
+          t.get('quick_actions'),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -227,8 +258,8 @@ class ProfileScreen extends StatelessWidget {
               child: _buildActionCard(
                 context: context,
                 icon: Icons.add_circle,
-                title: 'New Claim',
-                subtitle: 'Start assessment',
+                title: t.get('new_claim'),
+                subtitle: t.get('start_assessment'),
                 color: AppTheme.accentColor,
                 onTap: () => Navigator.pushNamed(context, '/claim-details'),
               ),
@@ -238,8 +269,8 @@ class ProfileScreen extends StatelessWidget {
               child: _buildActionCard(
                 context: context,
                 icon: Icons.history,
-                title: 'My Claims',
-                subtitle: 'View history',
+                title: t.get('my_claims'),
+                subtitle: t.get('view_history'),
                 color: AppTheme.primaryColor,
                 onTap: () {
                   // Navigate to claims history
@@ -300,12 +331,12 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildManagementSection(BuildContext context) {
+  Widget _buildManagementSection(BuildContext context, AppLocalizations t) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Management',
+          t.get('management'),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -327,11 +358,11 @@ class ProfileScreen extends StatelessWidget {
               ),
               child: Icon(Icons.manage_accounts, color: AppTheme.accentColor),
             ),
-            title: const Text(
-              'Manage Requests',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            title: Text(
+              t.get('manage_requests'),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: const Text('Review and verify claims'),
+            subtitle: Text(t.get('review_verify')),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () => Navigator.pushNamed(context, '/manage-requests'),
           ),

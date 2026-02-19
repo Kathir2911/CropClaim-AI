@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
+import 'package:geocoding/geocoding.dart';
 import '../models/claim_data.dart';
 import '../models/damage_type.dart';
 import '../providers/app_state.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
 import '../services/gps_service.dart';
 import '../widgets/app_drawer.dart';
-import '../widgets/auth_header.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/header_widget.dart';
 
@@ -21,9 +24,11 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
   final _farmerNameController = TextEditingController();
   final _policyIdController = TextEditingController();
   final _landAreaController = TextEditingController();
+  final _villageController = TextEditingController();
 
   String _selectedCropType = 'Rice';
   String _village = '';
+  bool _isLoadingLocation = true;
 
   final List<String> _cropTypes = [
     'Rice',
@@ -41,20 +46,71 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
     _fetchLocation();
   }
 
-  void _fetchLocation() {
-    // Mock GPS fetch
-    final location = GPSService.getMockLocation();
+  void _fetchLocation() async {
     setState(() {
-      _village = GPSService.getVillageName(location);
+      _isLoadingLocation = true;
     });
+
+    // Get real GPS location (triggers permission request on mobile)
+    final location = await GPSService.getCurrentLocation();
+
+    // Get real village/locality name via reverse geocoding
+    String villageName = 'Unknown';
+    try {
+      if (!kIsWeb) {
+        List<Placemark> placemarks = await placemarkFromCoordinates(
+          location.latitude,
+          location.longitude,
+        );
+        if (placemarks.isNotEmpty) {
+          final place = placemarks.first;
+          // Try subLocality first (village), then locality (town/city)
+          villageName = place.subLocality?.isNotEmpty == true
+              ? place.subLocality!
+              : place.locality?.isNotEmpty == true
+              ? place.locality!
+              : place.subAdministrativeArea ?? 'Unknown';
+        }
+      } else {
+        villageName = GPSService.getVillageName(location);
+      }
+    } catch (e) {
+      villageName = GPSService.getVillageName(location);
+    }
+
+    if (mounted) {
+      setState(() {
+        _village = villageName;
+        _isLoadingLocation = false;
+        _villageController.text = villageName;
+      });
+
+      final locale = Provider.of<LocaleProvider>(context, listen: false);
+      final t = AppLocalizations(locale.languageCode);
+
+      // Show GPS status on screen
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            GPSService.isRealGPS
+                ? '✅ ${t.get('gps_locked')}: $villageName (${location.latitude.toStringAsFixed(4)}, ${location.longitude.toStringAsFixed(4)})'
+                : '⚠️ ${GPSService.lastStatus}',
+          ),
+          backgroundColor: GPSService.isRealGPS ? Colors.green : Colors.orange,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Claim Details')),
+      appBar: AppBar(title: Text(t.get('claim_details'))),
       drawer: const AppDrawer(),
       body: SafeArea(
         child: Form(
@@ -62,10 +118,9 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
           child: ListView(
             padding: const EdgeInsets.all(24.0),
             children: [
-              const HeaderWidget(
-                title: 'Enter Claim Information',
-                subtitle:
-                    'Please provide accurate details for claim processing',
+              HeaderWidget(
+                title: t.get('claim_details'),
+                subtitle: t.get('farmer_desc'),
               ),
 
               const SizedBox(height: 24),
@@ -73,15 +128,15 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
               // Cause of Crop Damage - NEW DROPDOWN
               DropdownButtonFormField<DamageType>(
                 value: appState.claimData.damageType,
-                decoration: const InputDecoration(
-                  labelText: 'Cause of Crop Damage *',
-                  hintText: 'Select damage type',
-                  prefixIcon: Icon(Icons.warning_amber_rounded),
+                decoration: InputDecoration(
+                  labelText: '${t.get('damage_type')} *',
+                  hintText: t.get('damage_type'),
+                  prefixIcon: const Icon(Icons.warning_amber_rounded),
                 ),
                 items: DamageType.values.map((type) {
                   return DropdownMenuItem(
                     value: type,
-                    child: Text(type.displayName),
+                    child: Text(type.getLocalizedName(t)),
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -96,7 +151,7 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
                 },
                 validator: (value) {
                   if (value == null) {
-                    return 'Please select damage type';
+                    return t.get('select_damage_type');
                   }
                   return null;
                 },
@@ -107,14 +162,14 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
               // Farmer Name
               TextFormField(
                 controller: _farmerNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Farmer Name *',
-                  hintText: 'Enter full name',
-                  prefixIcon: Icon(Icons.person),
+                decoration: InputDecoration(
+                  labelText: '${t.get('farmer_name')} *',
+                  hintText: t.get('farmer_name'),
+                  prefixIcon: const Icon(Icons.person),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter farmer name';
+                    return t.get('enter_farmer_name');
                   }
                   return null;
                 },
@@ -125,15 +180,15 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
               // Policy ID / Aadhaar
               TextFormField(
                 controller: _policyIdController,
-                decoration: const InputDecoration(
-                  labelText: 'PMFBY Policy ID / Aadhaar *',
-                  hintText: 'Enter policy ID or Aadhaar number',
-                  prefixIcon: Icon(Icons.badge),
+                decoration: InputDecoration(
+                  labelText: '${t.get('policy_id_aadhaar')} *',
+                  hintText: t.get('enter_policy_aadhaar'),
+                  prefixIcon: const Icon(Icons.badge),
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter policy ID or Aadhaar';
+                    return t.get('enter_policy_id');
                   }
                   return null;
                 },
@@ -144,12 +199,15 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
               // Crop Type Dropdown
               DropdownButtonFormField<String>(
                 value: _selectedCropType,
-                decoration: const InputDecoration(
-                  labelText: 'Crop Type *',
-                  prefixIcon: Icon(Icons.grass),
+                decoration: InputDecoration(
+                  labelText: '${t.get('crop_type_label')} *',
+                  prefixIcon: const Icon(Icons.grass),
                 ),
                 items: _cropTypes.map((crop) {
-                  return DropdownMenuItem(value: crop, child: Text(crop));
+                  return DropdownMenuItem(
+                    value: crop,
+                    child: Text(t.get('crop_${crop.toLowerCase()}')),
+                  );
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
@@ -163,19 +221,19 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
               // Land Area
               TextFormField(
                 controller: _landAreaController,
-                decoration: const InputDecoration(
-                  labelText: 'Total Land Area (acres) *',
-                  hintText: 'Enter area in acres',
-                  prefixIcon: Icon(Icons.landscape),
+                decoration: InputDecoration(
+                  labelText: '${t.get('land_area_label')} *',
+                  hintText: t.get('land_area_hint'),
+                  prefixIcon: const Icon(Icons.landscape),
                 ),
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter land area';
+                    return t.get('enter_land_area');
                   }
                   final area = double.tryParse(value);
                   if (area == null || area <= 0) {
-                    return 'Please enter valid area';
+                    return t.get('valid_area');
                   }
                   return null;
                 },
@@ -183,14 +241,14 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
 
               const SizedBox(height: 16),
 
-              // Village (auto-filled)
+              // Village (auto-filled from GPS reverse geocoding)
               TextFormField(
-                initialValue: _village,
+                controller: _villageController,
                 decoration: InputDecoration(
-                  labelText: 'Village',
-                  hintText: 'Auto-detected from GPS',
+                  labelText: t.get('village_label'),
+                  hintText: t.get('auto_detected_gps'),
                   prefixIcon: const Icon(Icons.location_on),
-                  suffixIcon: _village.isEmpty
+                  suffixIcon: _isLoadingLocation
                       ? const SizedBox(
                           width: 20,
                           height: 20,
@@ -217,7 +275,7 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'GPS coordinates are automatically captured to prevent fraud',
+                          t.get('gps_fraud_info'),
                           style: TextStyle(
                             color: Colors.blue.shade900,
                             fontSize: 13,
@@ -233,7 +291,7 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
 
               // Submit button
               CustomButton(
-                text: 'Define Field Boundary',
+                text: t.get('define_boundary'),
                 icon: Icons.arrow_forward,
                 onPressed: _submitForm,
               ),
@@ -255,6 +313,7 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
           cropType: _selectedCropType,
           landArea: double.parse(_landAreaController.text),
           village: _village,
+          damageType: appState.claimData.damageType, // Preserve user selection
         ),
       );
 
@@ -267,6 +326,7 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
     _farmerNameController.dispose();
     _policyIdController.dispose();
     _landAreaController.dispose();
+    _villageController.dispose();
     super.dispose();
   }
 }

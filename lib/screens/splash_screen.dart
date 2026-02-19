@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,16 +15,25 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Auto-navigate after 5 seconds
-    Future.delayed(const Duration(seconds: 5), () {
+    // Auto-navigate after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () async {
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/mode-selection');
+        // Check if language has been selected before
+        final hasLanguage = await LocaleProvider.hasSelectedLanguage();
+        if (mounted) {
+          Navigator.pushReplacementNamed(
+            context,
+            hasLanguage ? '/mode-selection' : '/language',
+          );
+        }
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
     return Scaffold(
       backgroundColor: AppTheme.primaryDark, // Fixes white line at bottom
       body: Container(
@@ -60,9 +72,9 @@ class _SplashScreenState extends State<SplashScreen> {
                 const SizedBox(height: 32),
 
                 // App name
-                const Text(
-                  'CropClaim AI',
-                  style: TextStyle(
+                Text(
+                  t.get('app_name'),
+                  style: const TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -72,10 +84,10 @@ class _SplashScreenState extends State<SplashScreen> {
                 const SizedBox(height: 16),
 
                 // Subtitle
-                const Text(
-                  'Instant Crop Damage Assessment\nfor PMFBY',
+                Text(
+                  t.get('splash_subtitle'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 18,
                     color: Colors.white70,
                     height: 1.4,
@@ -85,18 +97,21 @@ class _SplashScreenState extends State<SplashScreen> {
                 const Spacer(),
 
                 // Government of India branding
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.account_balance,
                       color: Colors.white70,
                       size: 20,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
-                      'Government of India Initiative',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                      t.get('govt_initiative'),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),

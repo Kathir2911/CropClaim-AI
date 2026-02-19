@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/header_widget.dart';
@@ -12,12 +14,12 @@ class PMFBYClaimLogicScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
     final calculation = appState.pmfbyCalculation;
 
     if (calculation == null) {
-      return const Scaffold(
-        body: Center(child: Text('No calculation available')),
-      );
+      return Scaffold(body: Center(child: Text(t.get('no_calculation'))));
     }
 
     final currencyFormat = NumberFormat.currency(
@@ -27,14 +29,14 @@ class PMFBYClaimLogicScreen extends StatelessWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('PMFBY Claim Calculation')),
+      appBar: AppBar(title: Text(t.get('pmfby_calculation'))),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24.0),
           children: [
-            const HeaderWidget(
-              title: 'Insurance Calculation',
-              subtitle: 'Transparent PMFBY claim assessment',
+            HeaderWidget(
+              title: t.get('insurance_calculation'),
+              subtitle: t.get('transparent_pmfby'),
             ),
 
             const SizedBox(height: 24),
@@ -51,7 +53,7 @@ class PMFBYClaimLogicScreen extends StatelessWidget {
                         Icon(Icons.calculate, color: AppTheme.primaryColor),
                         const SizedBox(width: 12),
                         Text(
-                          'Claim Calculation',
+                          t.get('claim_calculation'),
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
                       ],
@@ -60,7 +62,7 @@ class PMFBYClaimLogicScreen extends StatelessWidget {
                     const SizedBox(height: 24),
 
                     _CalculationRow(
-                      label: 'Sum Insured',
+                      label: t.get('sum_insured'),
                       value: currencyFormat.format(calculation.sumInsured),
                       icon: Icons.account_balance_wallet,
                     ),
@@ -68,7 +70,7 @@ class PMFBYClaimLogicScreen extends StatelessWidget {
                     const Divider(height: 32),
 
                     _CalculationRow(
-                      label: 'Calculated Loss',
+                      label: t.get('calculated_loss'),
                       value:
                           '${calculation.calculatedLoss.toStringAsFixed(1)}%',
                       icon: Icons.trending_down,
@@ -78,17 +80,17 @@ class PMFBYClaimLogicScreen extends StatelessWidget {
                     const Divider(height: 32),
 
                     _CalculationRow(
-                      label: 'PMFBY Threshold',
+                      label: t.get('pmfby_threshold'),
                       value:
                           '${calculation.thresholdPercentage.toStringAsFixed(0)}%',
                       icon: Icons.rule,
-                      subtitle: 'Minimum loss required for eligibility',
+                      subtitle: t.get('threshold_subtitle'),
                     ),
 
                     const Divider(height: 32),
 
                     _CalculationRow(
-                      label: 'Eligible Claim Amount',
+                      label: t.get('eligible_amount'),
                       value: currencyFormat.format(
                         calculation.eligibleClaimAmount,
                       ),
@@ -128,8 +130,8 @@ class PMFBYClaimLogicScreen extends StatelessWidget {
                         children: [
                           Text(
                             calculation.isEligible
-                                ? 'Claim Eligible'
-                                : 'Claim Not Eligible',
+                                ? t.get('claim_eligible')
+                                : t.get('claim_not_eligible'),
                             style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
                                   color: calculation.isEligible
@@ -171,7 +173,7 @@ class PMFBYClaimLogicScreen extends StatelessWidget {
                         Icon(Icons.info_outline, color: Colors.blue.shade700),
                         const SizedBox(width: 12),
                         Text(
-                          'About PMFBY',
+                          t.get('about_pmfby'),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.blue.shade900,
@@ -181,8 +183,7 @@ class PMFBYClaimLogicScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Pradhan Mantri Fasal Bima Yojana (PMFBY) provides insurance coverage to farmers against crop loss. '
-                      'Claims are processed when the damage exceeds the threshold percentage.',
+                      t.get('pmfby_description'),
                       style: TextStyle(
                         color: Colors.blue.shade900,
                         fontSize: 13,
@@ -197,7 +198,7 @@ class PMFBYClaimLogicScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             CustomButton(
-              text: 'View Claim Report',
+              text: t.get('view_report'),
               icon: Icons.assignment,
               onPressed: () {
                 Navigator.pushNamed(context, '/claim-report');

@@ -44,14 +44,30 @@ dependencies:
   # QR code generation
   qr_flutter: ^4.1.0
   
-  # Camera (mocked)
+  # Camera (real on mobile, demo on web via conditional imports)
   camera: ^0.10.5+9
   
-  # GPS and location (mocked)
+  # GPS and location (real on mobile, mock on web via conditional imports)
   geolocator: ^11.0.0
   
   # PDF generation
   pdf: ^3.10.8
+  
+  # File system paths (for image storage on mobile)
+  path_provider: ^2.1.0
+  
+  # Reverse geocoding (GPS coordinates → place names)
+  geocoding: ^3.0.0
+  
+  # Map display (OpenStreetMap)
+  flutter_map: ^8.0.0
+  latlong2: ^0.9.1
+  
+  # Supabase (cloud storage + database)
+  supabase_flutter: ^2.0.0
+  
+  # Local storage (language preferences)
+  shared_preferences: ^2.2.0
   
   # Internationalization
   intl: ^0.19.0

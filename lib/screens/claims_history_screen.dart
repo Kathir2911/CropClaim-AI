@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_drawer.dart';
 
@@ -11,28 +13,30 @@ class ClaimsHistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
     final claims = appState.submittedClaims;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Claims'),
+        title: Text(t.get('my_claims')),
         backgroundColor: AppTheme.primaryColor,
       ),
       drawer: const AppDrawer(),
       body: claims.isEmpty
-          ? _buildEmptyState()
+          ? _buildEmptyState(t)
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: claims.length,
               itemBuilder: (context, index) {
                 final claim = claims[index];
-                return _buildClaimCard(context, claim);
+                return _buildClaimCard(context, claim, t);
               },
             ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(AppLocalizations t) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -40,7 +44,7 @@ class ClaimsHistoryScreen extends StatelessWidget {
           Icon(Icons.inbox_outlined, size: 100, color: Colors.grey.shade300),
           const SizedBox(height: 16),
           Text(
-            'No Claims Yet',
+            t.get('no_claims_title'),
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -49,7 +53,7 @@ class ClaimsHistoryScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Your submitted claims will appear here',
+            t.get('no_claims_subtitle'),
             style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
           ),
         ],
@@ -57,21 +61,26 @@ class ClaimsHistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildClaimCard(BuildContext context, claim) {
+  Widget _buildClaimCard(BuildContext context, claim, AppLocalizations t) {
     // Get  status color
     Color statusColor;
+    String localizedStatus;
     switch (claim.status) {
       case 'Approved':
         statusColor = Colors.green;
+        localizedStatus = t.get('approved');
         break;
       case 'Rejected':
         statusColor = Colors.red;
+        localizedStatus = t.get('rejected');
         break;
       case 'Under Review':
         statusColor = Colors.orange;
+        localizedStatus = t.get('under_review');
         break;
       default:
         statusColor = Colors.blue;
+        localizedStatus = claim.status; // Fallback if status is not localized
     }
 
     return Card(
@@ -79,7 +88,7 @@ class ClaimsHistoryScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () => _showClaimDetails(context, claim),
+        onTap: () => _showClaimDetails(context, claim, t),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -108,7 +117,7 @@ class ClaimsHistoryScreen extends StatelessWidget {
                       border: Border.all(color: statusColor, width: 1),
                     ),
                     child: Text(
-                      claim.status,
+                      localizedStatus,
                       style: TextStyle(
                         color: statusColor,
                         fontWeight: FontWeight.bold,
@@ -125,23 +134,25 @@ class ClaimsHistoryScreen extends StatelessWidget {
               // Claim Details
               _buildInfoRow(
                 Icons.grass,
-                'Crop',
-                claim.claimData.cropType ?? 'N/A',
+                t.get('crop_label'),
+                claim.claimData.cropType != null
+                    ? t.get('crop_${claim.claimData.cropType!.toLowerCase()}')
+                    : t.get('n_a'),
               ),
               _buildInfoRow(
                 Icons.landscape,
-                'Area',
-                '${claim.claimData.landArea ?? 0} acres',
+                t.get('area_label'),
+                '${claim.claimData.landArea ?? 0} ${t.get('acres_label')}',
               ),
               _buildInfoRow(
                 Icons.location_on,
-                'Village',
-                claim.claimData.village ?? 'N/A',
+                t.get('village_label'),
+                claim.claimData.village ?? t.get('n_a'),
               ),
               _buildInfoRow(
                 Icons.calendar_today,
-                'Submitted',
-                '${claim.formattedDate} at ${claim.formattedTime}',
+                t.get('submitted_label'),
+                '${claim.formattedDate} ${t.get('at_separator')} ${claim.formattedTime}',
               ),
             ],
           ),
@@ -172,7 +183,22 @@ class ClaimsHistoryScreen extends StatelessWidget {
     );
   }
 
-  void _showClaimDetails(BuildContext context, claim) {
+  void _showClaimDetails(BuildContext context, claim, AppLocalizations t) {
+    String localizedStatus;
+    switch (claim.status) {
+      case 'Approved':
+        localizedStatus = t.get('approved');
+        break;
+      case 'Rejected':
+        localizedStatus = t.get('rejected');
+        break;
+      case 'Under Review':
+        localizedStatus = t.get('under_review');
+        break;
+      default:
+        localizedStatus = claim.status;
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -182,37 +208,69 @@ class ClaimsHistoryScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDetailRow('Status', claim.status),
-              _buildDetailRow('Crop Type', claim.claimData.cropType ?? 'N/A'),
+              _buildDetailRow(t.get('status_label'), localizedStatus),
               _buildDetailRow(
-                'Land Area',
-                '${claim.claimData.landArea ?? 0} acres',
-              ),
-              _buildDetailRow('Village', claim.claimData.village ?? 'N/A'),
-              _buildDetailRow('District', claim.claimData.district ?? 'N/A'),
-              _buildDetailRow('State', claim.claimData.state ?? 'N/A'),
-              _buildDetailRow('Season', claim.claimData.season ?? 'N/A'),
-              _buildDetailRow('Year', claim.claimData.year ?? 'N/A'),
-              _buildDetailRow(
-                'Incident Type',
-                claim.claimData.incidentType ?? 'N/A',
+                t.get('crop_type_label'),
+                claim.claimData.cropType != null
+                    ? t.get('crop_${claim.claimData.cropType!.toLowerCase()}')
+                    : t.get('n_a'),
               ),
               _buildDetailRow(
-                'Submitted',
-                '${claim.formattedDate} ${claim.formattedTime}',
+                t.get('land_area_label'),
+                '${claim.claimData.landArea ?? 0} ${t.get('acres_label')}',
+              ),
+              _buildDetailRow(
+                t.get('village_label'),
+                claim.claimData.village ?? t.get('n_a'),
+              ),
+              _buildDetailRow(
+                t.get('district'),
+                claim.claimData.district ?? t.get('n_a'),
+              ),
+              _buildDetailRow(
+                t.get('state_label'),
+                claim.claimData.state ?? t.get('n_a'),
+              ),
+              _buildDetailRow(
+                t.get('season'),
+                claim.claimData.season ?? t.get('n_a'),
+              ),
+              _buildDetailRow(
+                t.get('year_label'),
+                claim.claimData.year ?? t.get('n_a'),
+              ),
+              _buildDetailRow(
+                t.get('incident_type'),
+                claim.claimData.incidentType ?? t.get('n_a'),
+              ),
+              _buildDetailRow(
+                t.get('submitted_label'),
+                '${claim.formattedDate} ${t.get('at_separator')} ${claim.formattedTime}',
               ),
               if (claim.aiResult != null) ...[
                 const Divider(),
-                const Text(
-                  'AI Analysis',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                Text(
+                  t.get('ai_analysis_title'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 _buildDetailRow(
-                  'Overall Damage',
-                  '${claim.aiResult!.overallDamagePercentage}%',
+                  t.get('overall_damage_label'),
+                  '${claim.aiResult!.damage.overallFieldLossPercentage.toStringAsFixed(1)}%',
                 ),
-                _buildDetailRow('Confidence', '${claim.aiResult!.confidence}%'),
+                if (claim.aiResult!.disease != null)
+                  _buildDetailRow(
+                    t.get('confidence_label'),
+                    '${(claim.aiResult!.disease!.confidence * 100).toStringAsFixed(0)}%',
+                  ),
+                if (claim.aiResult!.damage.severityLevel != null)
+                  _buildDetailRow(
+                    t.get('severity_label'),
+                    claim.aiResult!.damage.severityLevel!,
+                  ),
               ],
             ],
           ),
@@ -220,7 +278,7 @@ class ClaimsHistoryScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: Text(t.get('close')),
           ),
         ],
       ),

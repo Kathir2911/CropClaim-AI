@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/header_widget.dart';
@@ -13,13 +15,15 @@ class CaptureProgressScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
     final capturedImages = appState.capturedImages;
     final requiredCount = appState.requiredCaptureCount;
     final progress = capturedImages.length / requiredCount;
     final isComplete = capturedImages.length >= requiredCount;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Capture Progress')),
+      appBar: AppBar(title: Text(t.get('capture_progress'))),
       drawer: const AppDrawer(),
       body: SafeArea(
         child: Padding(
@@ -27,9 +31,9 @@ class CaptureProgressScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const HeaderWidget(
-                title: 'Field Coverage',
-                subtitle: 'Review your captured images',
+              HeaderWidget(
+                title: t.get('field_coverage'),
+                subtitle: t.get('review_images'),
               ),
 
               const SizedBox(height: 24),
@@ -44,7 +48,7 @@ class CaptureProgressScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Images Captured',
+                            t.get('images_captured'),
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           Text(
@@ -80,7 +84,7 @@ class CaptureProgressScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Minimum requirement met',
+                              t.get('min_requirement'),
                               style: TextStyle(
                                 color: AppTheme.successColor,
                                 fontWeight: FontWeight.w600,
@@ -109,7 +113,7 @@ class CaptureProgressScreen extends StatelessWidget {
                             Icon(Icons.map, color: AppTheme.primaryColor),
                             const SizedBox(width: 8),
                             Text(
-                              'Field Coverage Map',
+                              t.get('field_coverage_map'),
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                           ],
@@ -146,7 +150,7 @@ class CaptureProgressScreen extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Please capture ${requiredCount - capturedImages.length} more images to proceed',
+                            '${t.get('capture_more_warning')} (${requiredCount - capturedImages.length})',
                             style: TextStyle(
                               color: Colors.orange.shade900,
                               fontWeight: FontWeight.w600,
@@ -167,8 +171,8 @@ class CaptureProgressScreen extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.add_a_photo, size: 20),
-                      label: const Text(
-                        'Capture More',
+                      label: Text(
+                        t.get('capture_more'),
                         overflow: TextOverflow.ellipsis,
                       ),
                       style: ElevatedButton.styleFrom(
@@ -189,7 +193,7 @@ class CaptureProgressScreen extends StatelessWidget {
                   Expanded(
                     flex: 2,
                     child: CustomButton(
-                      text: 'Analyze Damage',
+                      text: t.get('analyze_damage'),
                       icon: Icons.analytics,
                       isEnabled: isComplete,
                       onPressed: () {

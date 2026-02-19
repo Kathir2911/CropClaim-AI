@@ -85,7 +85,6 @@ app.*.map.json
 **/ios/Runner/GeneratedPluginRegistrant.*
 
 # Web related
-lib/generated_plugin_registrant.dart
 
 # Exceptions to above rules.
 !**/ios/**/default.mode1v3
@@ -127,3 +126,21 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+
+# Analysis and Build logs
+analysis.txt
+analysis_clean.txt
+analyze_clean.txt
+analyze_machine.txt
+analyze_output.txt
+analyze_result.txt
+web_build.txt
+web_build2.txt
+web_build3.txt
+web_build4.txt
+web_build_gps.txt
+web_errors.txt
+build_result.txt
+errors_check.txt
+errors_only.txt
+*.log

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
 import '../services/pmfby_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_button.dart';
@@ -14,25 +16,27 @@ class AIResultsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
     final aiResult = appState.aiResult;
 
     if (aiResult == null) {
-      return const Scaffold(body: Center(child: Text('No results available')));
+      return Scaffold(body: Center(child: Text(t.get('no_results'))));
     }
 
     final disease = aiResult.disease;
     final damage = aiResult.damage;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Analysis Results')),
+      appBar: AppBar(title: Text(t.get('analysis_results'))),
       drawer: const AppDrawer(),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24.0),
           children: [
-            const HeaderWidget(
-              title: 'AI Analysis Complete',
-              subtitle: 'Review the detected disease and damage assessment',
+            HeaderWidget(
+              title: t.get('ai_complete'),
+              subtitle: t.get('ai_complete_subtitle'),
             ),
 
             const SizedBox(height: 24),
@@ -64,11 +68,13 @@ class AIResultsScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Crop Detected',
+                                t.get('crop_detected'),
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                               Text(
-                                aiResult.detectedCrop,
+                                t.get(
+                                  'crop_${aiResult.detectedCrop.toLowerCase()}',
+                                ),
                                 style: Theme.of(context).textTheme.displaySmall,
                               ),
                             ],
@@ -79,89 +85,139 @@ class AIResultsScreen extends StatelessWidget {
 
                     const Divider(height: 32),
 
-                    // Disease info
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppTheme.errorColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
+                    // Disease info OR Disaster severity info
+                    if (disease != null) ...[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.errorColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.warning,
+                              color: AppTheme.errorColor,
+                              size: 32,
+                            ),
                           ),
-                          child: Icon(
-                            Icons.warning,
-                            color: AppTheme.errorColor,
-                            size: 32,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  t.get('disease_detected'),
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  disease.diseaseName,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(color: AppTheme.errorColor),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  disease.description,
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Disease Detected',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                disease!.diseaseName,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(color: AppTheme.errorColor),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                disease!.description,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // Confidence score
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Confidence Score',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              const SizedBox(height: 8),
-                              LinearProgressIndicator(
-                                value: disease!.confidence,
-                                minHeight: 12,
-                                backgroundColor: Colors.grey.shade300,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  disease!.confidence >= 0.85
+                      // Confidence score
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  t.get('confidence_score'),
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                                const SizedBox(height: 8),
+                                LinearProgressIndicator(
+                                  value: disease.confidence,
+                                  minHeight: 12,
+                                  backgroundColor: Colors.grey.shade300,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    disease.confidence >= 0.85
+                                        ? AppTheme.successColor
+                                        : AppTheme.warningColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            '${(disease.confidence * 100).toStringAsFixed(0)}%',
+                            style: Theme.of(context).textTheme.displaySmall
+                                ?.copyWith(
+                                  color: disease.confidence >= 0.85
                                       ? AppTheme.successColor
                                       : AppTheme.warningColor,
                                 ),
-                              ),
-                            ],
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Text(
-                          '${(disease!.confidence * 100).toStringAsFixed(0)}%',
-                          style: Theme.of(context).textTheme.displaySmall
-                              ?.copyWith(
-                                color: disease!.confidence >= 0.85
-                                    ? AppTheme.successColor
-                                    : AppTheme.warningColor,
-                              ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ] else ...[
+                      // Natural disaster severity display
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.warningColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.flood,
+                              color: AppTheme.warningColor,
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  t.get('natural_disaster_damage'),
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  damage.severityLevel != null
+                                      ? t.get(
+                                          damage.severityLevel!.toLowerCase(),
+                                        )
+                                      : t.get('assessed'),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(color: AppTheme.warningColor),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  t.get('disaster_assessed'),
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -177,13 +233,13 @@ class AIResultsScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
-                      'Annotated Image',
+                      t.get('annotated_image'),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
                   MockAnnotatedImage(
                     cropType: aiResult.detectedCrop,
-                    disease: disease?.diseaseName ?? 'N/A',
+                    disease: disease?.diseaseName ?? t.get('n_a'),
                   ),
                 ],
               ),
@@ -199,21 +255,21 @@ class AIResultsScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Damage Statistics',
+                      t.get('damage_statistics'),
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 16),
 
                     _StatRow(
-                      label: 'Area Affected',
+                      label: t.get('area_affected'),
                       value:
-                          '${damage.areaAffectedAcres.toStringAsFixed(1)} / ${damage.totalAreaAcres.toStringAsFixed(1)} acres',
+                          '${damage.areaAffectedAcres.toStringAsFixed(1)} / ${damage.totalAreaAcres.toStringAsFixed(1)} ${t.get('acres_label')}',
                       icon: Icons.location_on,
                     ),
                     const Divider(height: 24),
 
                     _StatRow(
-                      label: 'Avg Damage in Affected Area',
+                      label: t.get('avg_damage'),
                       value:
                           '${damage.averageDamagePercentage.toStringAsFixed(1)}%',
                       icon: Icons.percent,
@@ -222,7 +278,7 @@ class AIResultsScreen extends StatelessWidget {
                     const Divider(height: 24),
 
                     _StatRow(
-                      label: 'Overall Field Loss',
+                      label: t.get('overall_loss'),
                       value:
                           '${damage.overallFieldLossPercentage.toStringAsFixed(1)}%',
                       icon: Icons.trending_down,
@@ -237,7 +293,7 @@ class AIResultsScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             CustomButton(
-              text: 'Generate Claim Report',
+              text: t.get('generate_report'),
               icon: Icons.description,
               onPressed: () {
                 // Calculate PMFBY before proceeding

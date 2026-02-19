@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_drawer.dart';
 
@@ -12,11 +14,13 @@ class ManageRequestsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Manage Requests',
+        title: Text(
+          t.get('manage_requests'),
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppTheme.accentColor,
@@ -27,51 +31,54 @@ class ManageRequestsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           // Header
-          _buildHeader(appState),
+          _buildHeader(appState, t),
           const SizedBox(height: 24),
 
           // Pending Requests Section
-          _buildSectionHeader('Pending Requests', Icons.pending_actions),
+          _buildSectionHeader(t.get('pending_requests'), Icons.pending_actions),
           const SizedBox(height: 12),
           _buildRequestCard(
             claimId: 'CLM-2024-001',
             farmerName: 'Rajesh Kumar',
             cropType: 'Wheat',
             damagePercent: 45,
-            status: 'Pending Review',
+            status: t.get('pending_review'),
             statusColor: Colors.orange,
-            onTap: () => _showRequestDetails(context, 'CLM-2024-001'),
+            onTap: () => _showRequestDetails(context, 'CLM-2024-001', t),
           ),
           const SizedBox(height: 12),
           _buildRequestCard(
             claimId: 'CLM-2024-003',
             farmerName: 'Sunita Devi',
-            cropType: 'Cotton',
+            cropType: t.get('crop_cotton'),
             damagePercent: 62,
-            status: 'Pending Review',
+            status: t.get('pending_review'),
             statusColor: Colors.orange,
-            onTap: () => _showRequestDetails(context, 'CLM-2024-003'),
+            onTap: () => _showRequestDetails(context, 'CLM-2024-003', t),
           ),
           const SizedBox(height: 24),
 
           // Reviewed Requests Section
-          _buildSectionHeader('Recently Reviewed', Icons.check_circle_outline),
+          _buildSectionHeader(
+            t.get('recently_reviewed'),
+            Icons.check_circle_outline,
+          ),
           const SizedBox(height: 12),
           _buildRequestCard(
             claimId: 'CLM-2024-002',
             farmerName: 'Amit Singh',
             cropType: 'Rice',
             damagePercent: 38,
-            status: 'Approved',
+            status: t.get('approved'),
             statusColor: Colors.green,
-            onTap: () => _showRequestDetails(context, 'CLM-2024-002'),
+            onTap: () => _showRequestDetails(context, 'CLM-2024-002', t),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(AppState appState) {
+  Widget _buildHeader(AppState appState, AppLocalizations t) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -93,8 +100,8 @@ class ManageRequestsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Claim Verification',
+                    Text(
+                      t.get('claim_verification'),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -102,7 +109,14 @@ class ManageRequestsScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      appState.currentRoleDisplay ?? 'Operator',
+                      appState.currentRoleDisplay != null
+                          ? t.get(
+                              appState.currentRoleDisplay!
+                                      .toLowerCase()
+                                      .replaceAll(' ', '_') +
+                                  '_role',
+                            )
+                          : t.get('operator_role'),
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
                         fontSize: 14,
@@ -116,9 +130,9 @@ class ManageRequestsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              _buildStatCard('Pending', '2', Colors.orange),
+              _buildStatCard(t.get('pending'), '2', Colors.orange),
               const SizedBox(width: 12),
-              _buildStatCard('Reviewed', '1', Colors.green),
+              _buildStatCard(t.get('reviewed_label'), '1', Colors.green),
             ],
           ),
         ],
@@ -273,43 +287,55 @@ class ManageRequestsScreen extends StatelessWidget {
     );
   }
 
-  void _showRequestDetails(BuildContext context, String claimId) {
+  void _showRequestDetails(
+    BuildContext context,
+    String claimId,
+    AppLocalizations t,
+  ) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: Text('Claim Details: $claimId'),
+          title: Text('${t.get('mock_view_title')}$claimId'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('This is a mock view for claim $claimId'),
+              Text('${t.get('mock_view_desc')} $claimId'),
               const SizedBox(height: 16),
-              const Text('In a production app, this would show:'),
+              Text(t.get('production_info')),
               const SizedBox(height: 8),
               Text(
-                '• Detailed farmer information',
-                style: TextStyle(fontSize: 14),
+                '• ${t.get('detailed_farmer')}',
+                style: const TextStyle(fontSize: 14),
               ),
-              Text('• AI analysis results', style: TextStyle(fontSize: 14)),
               Text(
-                '• Field images and boundaries',
-                style: TextStyle(fontSize: 14),
+                '• ${t.get('ai_results_info')}',
+                style: const TextStyle(fontSize: 14),
               ),
-              Text('• Verification options', style: TextStyle(fontSize: 14)),
+              Text(
+                '• ${t.get('field_images')}',
+                style: const TextStyle(fontSize: 14),
+              ),
+              Text(
+                '• ${t.get('verification_options')}',
+                style: const TextStyle(fontSize: 14),
+              ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Close'),
+              child: Text(t.get('close')),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Claim $claimId approved'),
+                    content: Text(
+                      '$claimId ${t.get('approved').toLowerCase()}',
+                    ),
                     backgroundColor: Colors.green,
                   ),
                 );
@@ -317,7 +343,7 @@ class ManageRequestsScreen extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accentColor,
               ),
-              child: const Text('Approve'),
+              child: Text(t.get('approve')),
             ),
           ],
         );

@@ -65,9 +65,11 @@ class AIService {
           damagePercent = 55 + _random.nextDouble() * 20; // 55-75%
           severityLevel = damagePercent > 65 ? 'Severe' : 'Medium';
           break;
-        default:
+        case DamageType.disease:
+          // Unreachable: disease is handled in the if-branch above
           damagePercent = 50.0;
           severityLevel = 'Low';
+          break;
       }
 
       final areaAffected = totalAreaAcres * (damagePercent / 100);

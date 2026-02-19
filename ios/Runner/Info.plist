@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>CropClaim AI needs camera access to capture images of crop damage for insurance claims.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>CropClaim AI needs location access to geo-tag crop damage images for insurance claims.</string>
 </dict>
 </plist>

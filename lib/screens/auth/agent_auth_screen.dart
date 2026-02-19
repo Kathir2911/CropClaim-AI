@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../models/auth_models.dart';
 import '../../providers/app_state.dart';
+import '../../providers/locale_provider.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/otp_input.dart';
@@ -29,8 +31,10 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
     return Scaffold(
-      appBar: AppBar(title: const Text('Insurance Agent Login')),
+      appBar: AppBar(title: Text(t.get('agent_login'))),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -39,9 +43,9 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const HeaderWidget(
-                  title: 'Insurance Agent Login',
-                  subtitle: 'Krushi Sahayak - Highest accountability role',
+                HeaderWidget(
+                  title: t.get('agent_login'),
+                  subtitle: t.get('agent_subtitle'),
                 ),
 
                 const SizedBox(height: 32),
@@ -49,15 +53,15 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
                 // Agent ID
                 TextFormField(
                   controller: _agentIdController,
-                  decoration: const InputDecoration(
-                    labelText: 'Agent ID *',
-                    hintText: 'AGT001, AGT002, etc.',
-                    prefixIcon: Icon(Icons.badge),
+                  decoration: InputDecoration(
+                    labelText: '${t.get('agent_id_label')} *',
+                    hintText: t.get('agent_hint'),
+                    prefixIcon: const Icon(Icons.badge),
                   ),
                   textCapitalization: TextCapitalization.characters,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter Agent ID';
+                      return t.get('enter_agent_id');
                     }
                     return null;
                   },
@@ -68,17 +72,17 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
                 // Mobile Number
                 TextFormField(
                   controller: _mobileController,
-                  decoration: const InputDecoration(
-                    labelText: 'Registered Mobile Number *',
-                    hintText: '10 digit mobile number',
-                    prefixIcon: Icon(Icons.phone),
+                  decoration: InputDecoration(
+                    labelText: '${t.get('registered_mobile')} *',
+                    hintText: t.get('mobile_hint'),
+                    prefixIcon: const Icon(Icons.phone),
                   ),
                   keyboardType: TextInputType.phone,
                   maxLength: 10,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   validator: (value) {
                     if (value == null || value.length != 10) {
-                      return 'Please enter valid 10-digit mobile number';
+                      return t.get('valid_mobile');
                     }
                     return null;
                   },
@@ -89,7 +93,7 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
                 // Send OTP Button
                 if (!_otpSent)
                   CustomButton(
-                    text: 'Send OTP',
+                    text: t.get('send_otp'),
                     icon: Icons.message,
                     onPressed: _sendOTP,
                     isEnabled: !_isLoading,
@@ -98,8 +102,8 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
                 // OTP Input
                 if (_otpSent) ...[
                   const SizedBox(height: 24),
-                  const Text(
-                    'Enter OTP',
+                  Text(
+                    t.get('enter_otp'),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 12),
@@ -113,7 +117,7 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
                   const SizedBox(height: 8),
                   Center(
                     child: Text(
-                      'For demo: Use 123456',
+                      t.get('demo_otp_hint'),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -127,8 +131,8 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
                   // Biometric Toggle
                   Card(
                     child: SwitchListTile(
-                      title: const Text('Use Biometric Authentication'),
-                      subtitle: const Text('Mocked for prototype'),
+                      title: Text(t.get('use_biometric')),
+                      subtitle: Text(t.get('biometric_hint')),
                       value: _useBiometric,
                       onChanged: (value) {
                         setState(() {
@@ -151,10 +155,10 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
                   if (!_useBiometric)
                     TextFormField(
                       controller: _pinController,
-                      decoration: const InputDecoration(
-                        labelText: 'Agent PIN *',
-                        hintText: '4-6 digit PIN',
-                        prefixIcon: Icon(Icons.lock),
+                      decoration: InputDecoration(
+                        labelText: '${t.get('agent_pin')} *',
+                        hintText: t.get('pin_hint'),
+                        prefixIcon: const Icon(Icons.lock),
                       ),
                       keyboardType: TextInputType.number,
                       obscureText: true,
@@ -163,7 +167,7 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
                       validator: (value) {
                         if (_useBiometric) return null;
                         if (value == null || value.length < 4) {
-                          return 'PIN must be at least 4 digits';
+                          return t.get('valid_pin');
                         }
                         return null;
                       },
@@ -186,7 +190,7 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '🔍 Audit Enabled',
+                                '🔍 ${t.get('audit_enabled')}',
                                 style: TextStyle(
                                   color: Colors.orange.shade900,
                                   fontWeight: FontWeight.bold,
@@ -195,7 +199,7 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'All actions will be logged and monitored',
+                                t.get('audit_desc'),
                                 style: TextStyle(
                                   color: Colors.orange.shade900,
                                   fontSize: 12,
@@ -221,7 +225,7 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Agents cannot manually edit AI detection results',
+                            t.get('ai_edit_policy'),
                             style: TextStyle(
                               color: Colors.blue.shade900,
                               fontSize: 13,
@@ -237,7 +241,7 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
 
                 // Login Button
                 CustomButton(
-                  text: 'Login as Agent',
+                  text: t.get('login_agent'),
                   icon: Icons.login,
                   onPressed: _loginAsAgent,
                   isEnabled: _otpSent && _otp.isNotEmpty && !_isLoading,
@@ -268,10 +272,13 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
       }
     });
 
+    final locale = Provider.of<LocaleProvider>(context, listen: false);
+    final t = AppLocalizations(locale.languageCode);
+
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('OTP sent successfully!'),
+        SnackBar(
+          content: Text(t.get('otp_sent')),
           backgroundColor: AppTheme.successColor,
         ),
       );
@@ -294,9 +301,11 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
         _isLoading = false;
       });
       if (mounted) {
+        final locale = Provider.of<LocaleProvider>(context, listen: false);
+        final t = AppLocalizations(locale.languageCode);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid OTP'),
+          SnackBar(
+            content: Text(t.get('invalid_otp')),
             backgroundColor: AppTheme.errorColor,
           ),
         );
@@ -312,9 +321,11 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
           _isLoading = false;
         });
         if (mounted) {
+          final locale = Provider.of<LocaleProvider>(context, listen: false);
+          final t = AppLocalizations(locale.languageCode);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Biometric verification failed'),
+            SnackBar(
+              content: Text(t.get('biometric_failed')),
               backgroundColor: AppTheme.errorColor,
             ),
           );
@@ -327,9 +338,11 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
           _isLoading = false;
         });
         if (mounted) {
+          final locale = Provider.of<LocaleProvider>(context, listen: false);
+          final t = AppLocalizations(locale.languageCode);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Invalid PIN'),
+            SnackBar(
+              content: Text(t.get('invalid_pin')),
               backgroundColor: AppTheme.errorColor,
             ),
           );
@@ -346,9 +359,11 @@ class _AgentAuthScreenState extends State<AgentAuthScreen> {
         _isLoading = false;
       });
       if (mounted) {
+        final locale = Provider.of<LocaleProvider>(context, listen: false);
+        final t = AppLocalizations(locale.languageCode);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Agent ID not found'),
+          SnackBar(
+            content: Text(t.get('agent_not_found')),
             backgroundColor: AppTheme.errorColor,
           ),
         );

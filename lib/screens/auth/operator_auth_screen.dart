@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../models/auth_models.dart';
 import '../../providers/app_state.dart';
+import '../../providers/locale_provider.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/otp_input.dart';
@@ -28,8 +30,10 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
     return Scaffold(
-      appBar: AppBar(title: const Text('CSC / PACS Operator Login')),
+      appBar: AppBar(title: Text(t.get('operator_login'))),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -38,9 +42,9 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const HeaderWidget(
-                  title: 'CSC / PACS Operator Login',
-                  subtitle: 'Assisted capture mode - Higher accountability',
+                HeaderWidget(
+                  title: t.get('operator_login'),
+                  subtitle: t.get('operator_subtitle'),
                 ),
 
                 const SizedBox(height: 32),
@@ -48,15 +52,15 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
                 // CSC/PACS ID
                 TextFormField(
                   controller: _cscIdController,
-                  decoration: const InputDecoration(
-                    labelText: 'CSC ID or PACS ID *',
-                    hintText: 'CSC001, PACS001, etc.',
-                    prefixIcon: Icon(Icons.business),
+                  decoration: InputDecoration(
+                    labelText: '${t.get('csc_id')} *',
+                    hintText: t.get('csc_hint'),
+                    prefixIcon: const Icon(Icons.business),
                   ),
                   textCapitalization: TextCapitalization.characters,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter CSC or PACS ID';
+                      return t.get('enter_csc_id');
                     }
                     return null;
                   },
@@ -67,17 +71,17 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
                 // Mobile Number
                 TextFormField(
                   controller: _mobileController,
-                  decoration: const InputDecoration(
-                    labelText: 'Operator Mobile Number *',
-                    hintText: '10 digit mobile number',
-                    prefixIcon: Icon(Icons.phone),
+                  decoration: InputDecoration(
+                    labelText: '${t.get('operator_mobile')} *',
+                    hintText: t.get('mobile_hint'),
+                    prefixIcon: const Icon(Icons.phone),
                   ),
                   keyboardType: TextInputType.phone,
                   maxLength: 10,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   validator: (value) {
                     if (value == null || value.length != 10) {
-                      return 'Please enter valid 10-digit mobile number';
+                      return t.get('valid_mobile');
                     }
                     return null;
                   },
@@ -88,7 +92,7 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
                 // Send OTP Button
                 if (!_otpSent)
                   CustomButton(
-                    text: 'Send OTP',
+                    text: t.get('send_otp'),
                     icon: Icons.message,
                     onPressed: _sendOTP,
                     isEnabled: !_isLoading,
@@ -97,8 +101,8 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
                 // OTP Input
                 if (_otpSent) ...[
                   const SizedBox(height: 24),
-                  const Text(
-                    'Enter OTP',
+                  Text(
+                    t.get('enter_otp'),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 12),
@@ -112,7 +116,7 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
                   const SizedBox(height: 8),
                   Center(
                     child: Text(
-                      'For demo: Use 123456',
+                      t.get('demo_otp_hint'),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -126,10 +130,10 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
                   // PIN
                   TextFormField(
                     controller: _pinController,
-                    decoration: const InputDecoration(
-                      labelText: 'Operator PIN *',
-                      hintText: '4-6 digit PIN',
-                      prefixIcon: Icon(Icons.lock),
+                    decoration: InputDecoration(
+                      labelText: '${t.get('operator_pin')} *',
+                      hintText: t.get('pin_hint'),
+                      prefixIcon: const Icon(Icons.lock),
                     ),
                     keyboardType: TextInputType.number,
                     obscureText: true,
@@ -137,7 +141,7 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: (value) {
                       if (value == null || value.length < 4) {
-                        return 'PIN must be at least 4 digits';
+                        return t.get('valid_pin');
                       }
                       return null;
                     },
@@ -157,7 +161,7 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'All assisted captures will be tagged with your operator ID for accountability',
+                            t.get('operator_accountability'),
                             style: TextStyle(
                               color: Colors.blue.shade900,
                               fontSize: 13,
@@ -173,7 +177,7 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
 
                 // Login Button
                 CustomButton(
-                  text: 'Login as Operator',
+                  text: t.get('login_operator'),
                   icon: Icons.login,
                   onPressed: _loginAsOperator,
                   isEnabled: _otpSent && _otp.isNotEmpty && !_isLoading,
@@ -204,10 +208,13 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
       }
     });
 
+    final locale = Provider.of<LocaleProvider>(context, listen: false);
+    final t = AppLocalizations(locale.languageCode);
+
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('OTP sent successfully!'),
+        SnackBar(
+          content: Text(t.get('otp_sent')),
           backgroundColor: AppTheme.successColor,
         ),
       );
@@ -230,9 +237,11 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
         _isLoading = false;
       });
       if (mounted) {
+        final locale = Provider.of<LocaleProvider>(context, listen: false);
+        final t = AppLocalizations(locale.languageCode);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid OTP'),
+          SnackBar(
+            content: Text(t.get('invalid_otp')),
             backgroundColor: AppTheme.errorColor,
           ),
         );
@@ -246,9 +255,11 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
         _isLoading = false;
       });
       if (mounted) {
+        final locale = Provider.of<LocaleProvider>(context, listen: false);
+        final t = AppLocalizations(locale.languageCode);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid PIN'),
+          SnackBar(
+            content: Text(t.get('invalid_pin')),
             backgroundColor: AppTheme.errorColor,
           ),
         );
@@ -266,9 +277,11 @@ class _OperatorAuthScreenState extends State<OperatorAuthScreen> {
         _isLoading = false;
       });
       if (mounted) {
+        final locale = Provider.of<LocaleProvider>(context, listen: false);
+        final t = AppLocalizations(locale.languageCode);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('CSC/PACS ID not found'),
+          SnackBar(
+            content: Text(t.get('csc_not_found')),
             backgroundColor: AppTheme.errorColor,
           ),
         );

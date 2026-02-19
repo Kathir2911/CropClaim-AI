@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
 
 class AuthHeader extends StatelessWidget {
   const AuthHeader({super.key});
@@ -9,6 +11,8 @@ class AuthHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
 
     if (!appState.isAuthenticated) {
       return const SizedBox.shrink();
@@ -31,7 +35,7 @@ class AuthHeader extends StatelessWidget {
           // User Display
           Flexible(
             child: Text(
-              appState.authenticatedUserDisplay ?? 'User',
+              appState.authenticatedUserDisplay ?? t.get('user_label'),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 14,
@@ -50,13 +54,13 @@ class AuthHeader extends StatelessWidget {
                 color: Colors.orange,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.visibility, color: Colors.white, size: 12),
-                  SizedBox(width: 4),
+                  const Icon(Icons.visibility, color: Colors.white, size: 12),
+                  const SizedBox(width: 4),
                   Text(
-                    'Audit',
-                    style: TextStyle(
+                    t.get('audit_badge'),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -72,10 +76,10 @@ class AuthHeader extends StatelessWidget {
           // Logout Button
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white, size: 20),
-            onPressed: () => _logout(context, appState),
+            onPressed: () => _logout(context, appState, t),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
-            tooltip: 'Logout',
+            tooltip: t.get('logout'),
           ),
         ],
       ),
@@ -89,16 +93,16 @@ class AuthHeader extends StatelessWidget {
     return Icons.person;
   }
 
-  void _logout(BuildContext context, AppState appState) {
+  void _logout(BuildContext context, AppState appState, AppLocalizations t) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text(t.get('confirm_logout')),
+        content: Text(t.get('logout_confirm_msg')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(t.get('cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -106,9 +110,9 @@ class AuthHeader extends StatelessWidget {
               Navigator.pop(context);
               Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
             },
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: AppTheme.errorColor),
+            child: Text(
+              t.get('logout'),
+              style: const TextStyle(color: AppTheme.errorColor),
             ),
           ),
         ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 
 /// Navigation drawer with role-based menu visibility
@@ -11,7 +13,8 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
     return Drawer(
       child: Container(
         color: Colors.white,
@@ -25,24 +28,24 @@ class AppDrawer extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  // "View My Claims" - Available to all roles
+                  // "View My Claims"
                   _buildMenuItem(
                     context: context,
                     icon: Icons.assignment,
-                    title: 'View My Claims',
-                    subtitle: 'See all submitted claims',
+                    title: t.get('claims_history'),
+                    subtitle: t.get('claims_history'),
                     onTap: () {
-                      Navigator.pop(context); // Close drawer
+                      Navigator.pop(context);
                       Navigator.pushNamed(context, '/claim-details');
                     },
                   ),
 
-                  // "Create New Claim" - Available to all roles
+                  // "Create New Claim"
                   _buildMenuItem(
                     context: context,
                     icon: Icons.add_circle_outline,
-                    title: 'Create New Claim',
-                    subtitle: 'Start a new damage assessment',
+                    title: t.get('claim_details'),
+                    subtitle: t.get('farmer_desc'),
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.pushNamed(context, '/claim-details');
@@ -56,8 +59,8 @@ class AppDrawer extends StatelessWidget {
                     _buildMenuItem(
                       context: context,
                       icon: Icons.manage_accounts,
-                      title: 'Manage Requests',
-                      subtitle: 'Review and verify claims',
+                      title: t.get('manage_requests'),
+                      subtitle: t.get('agent_desc'),
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.pushNamed(context, '/manage-requests');
@@ -67,12 +70,24 @@ class AppDrawer extends StatelessWidget {
 
                   const Divider(),
 
+                  // Change Language
+                  _buildMenuItem(
+                    context: context,
+                    icon: Icons.translate,
+                    title: t.get('select_language'),
+                    subtitle: t.get('choose_language'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/language');
+                    },
+                  ),
+
                   // Logout
                   _buildMenuItem(
                     context: context,
                     icon: Icons.logout,
-                    title: 'Logout',
-                    subtitle: 'Sign out of your account',
+                    title: t.get('logout'),
+                    subtitle: t.get('logout'),
                     onTap: () => _showLogoutDialog(context, appState),
                     isDestructive: true,
                   ),
@@ -81,7 +96,7 @@ class AppDrawer extends StatelessWidget {
             ),
 
             // Footer
-            _buildDrawerFooter(),
+            _buildDrawerFooter(context),
           ],
         ),
       ),
@@ -89,20 +104,23 @@ class AppDrawer extends StatelessWidget {
   }
 
   Widget _buildDrawerHeader(BuildContext context, AppState appState) {
-    final roleDisplay = appState.currentRoleDisplay ?? 'User';
-    String userName = 'Guest';
+    final locale = Provider.of<LocaleProvider>(context, listen: false);
+    final t = AppLocalizations(locale.languageCode);
+    final roleDisplay = appState.currentRoleDisplay ?? t.get('user_role');
+    String userName = t.get('guest_user');
     String userDetails = '';
 
     // Get user-specific details based on role
     if (appState.farmerAuth != null) {
-      userName = 'Farmer';
-      userDetails = 'Policy: ${appState.farmerAuth!.policyId}';
+      userName = t.get('farmer_role');
+      userDetails =
+          '${t.get('policy_prefix')}: ${appState.farmerAuth!.policyId ?? 'N/A'}';
     } else if (appState.operatorAuth != null) {
-      userName = 'CSC/PACS Operator';
-      userDetails = 'ID: ${appState.operatorAuth!.cscId}';
+      userName = t.get('operator_role');
+      userDetails = '${t.get('id_prefix')}: ${appState.operatorAuth!.cscId}';
     } else if (appState.agentAuth != null) {
-      userName = 'Insurance Agent';
-      userDetails = 'ID: ${appState.agentAuth!.agentId}';
+      userName = t.get('agent_role');
+      userDetails = '${t.get('id_prefix')}: ${appState.agentAuth!.agentId}';
     }
 
     return Container(
@@ -214,7 +232,9 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerFooter() {
+  Widget _buildDrawerFooter(BuildContext context) {
+    final locale = Provider.of<LocaleProvider>(context, listen: false);
+    final t = AppLocalizations(locale.languageCode);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -228,7 +248,7 @@ class AppDrawer extends StatelessWidget {
               Icon(Icons.eco, size: 16, color: AppTheme.accentColor),
               const SizedBox(width: 8),
               Text(
-                'CropClaim AI',
+                t.get('app_name'),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -239,7 +259,7 @@ class AppDrawer extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'PMFBY Digital Solution',
+            t.get('pmfby_digital'),
             style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
           ),
         ],
@@ -248,26 +268,28 @@ class AppDrawer extends StatelessWidget {
   }
 
   void _showLogoutDialog(BuildContext context, AppState appState) {
+    final locale = Provider.of<LocaleProvider>(context, listen: false);
+    final t = AppLocalizations(locale.languageCode);
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Row(
-            children: const [
+            children: [
               Icon(Icons.logout, color: Colors.orange),
               SizedBox(width: 8),
-              Text('Confirm Logout'),
+              Text(t.get('confirm_logout')),
             ],
           ),
-          content: const Text(
-            'Are you sure you want to logout?\n\nAny unsaved progress will be lost.',
+          content: Text(
+            t.get('logout_confirm_msg'),
             style: TextStyle(fontSize: 15),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
               child: Text(
-                'Cancel',
+                t.get('cancel'),
                 style: TextStyle(color: Colors.grey.shade700),
               ),
             ),
@@ -289,7 +311,7 @@ class AppDrawer extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red.shade600,
               ),
-              child: const Text('Logout'),
+              child: Text(t.get('logout')),
             ),
           ],
         );

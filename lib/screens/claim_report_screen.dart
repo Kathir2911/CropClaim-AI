@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../providers/app_state.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/custom_button.dart';
@@ -14,6 +16,8 @@ class ClaimReportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
     final claimData = appState.claimData;
     final aiResult = appState.aiResult;
     final pmfbyCalculation = appState.pmfbyCalculation;
@@ -30,7 +34,7 @@ class ClaimReportScreen extends StatelessWidget {
     final reportHash = 'PMFBY-${DateTime.now().millisecondsSinceEpoch}';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Claim Report')),
+      appBar: AppBar(title: Text(t.get('claim_report'))),
       drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
@@ -39,9 +43,9 @@ class ClaimReportScreen extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.all(24.0),
                 children: [
-                  const HeaderWidget(
-                    title: 'Crop Damage Claim Report',
-                    subtitle: 'Official PMFBY claim documentation',
+                  HeaderWidget(
+                    title: t.get('crop_damage_report'),
+                    subtitle: t.get('official_pmfby'),
                   ),
 
                   const SizedBox(height: 24),
@@ -59,9 +63,9 @@ class ClaimReportScreen extends StatelessWidget {
                             color: Colors.white,
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'CropClaim AI Report',
-                            style: TextStyle(
+                          Text(
+                            t.get('cropclaim_report'),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -69,7 +73,7 @@ class ClaimReportScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Generated on ${dateFormat.format(DateTime.now())}',
+                            '${t.get('generated_on')} ${dateFormat.format(DateTime.now())}',
                             style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
@@ -90,23 +94,30 @@ class ClaimReportScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Farmer Details',
+                            t.get('farmer_details'),
                             style: Theme.of(context).textTheme.headlineMedium,
                           ),
                           const SizedBox(height: 16),
-                          _InfoRow(label: 'Name', value: claimData.farmerName),
                           _InfoRow(
-                            label: 'Policy ID',
+                            label: t.get('name_label'),
+                            value: claimData.farmerName,
+                          ),
+                          _InfoRow(
+                            label: t.get('policy_id'),
                             value: claimData.policyId,
                           ),
-                          _InfoRow(label: 'Village', value: claimData.village),
                           _InfoRow(
-                            label: 'Land Area',
-                            value: '${claimData.landArea} acres',
+                            label: t.get('village'),
+                            value: claimData.village,
+                          ),
+                          _InfoRow(
+                            label: t.get('land_area'),
+                            value:
+                                '${claimData.landArea} ${t.get('acres_label')}',
                           ),
                           if (userSession?.operatorId != null)
                             _InfoRow(
-                              label: 'Operator ID',
+                              label: t.get('operator_id'),
                               value: userSession!.operatorId!,
                             ),
                         ],
@@ -124,32 +135,34 @@ class ClaimReportScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Assessment Results',
+                            t.get('assessment_results'),
                             style: Theme.of(context).textTheme.headlineMedium,
                           ),
                           const SizedBox(height: 16),
                           _InfoRow(
-                            label: 'Crop Type',
+                            label: t.get('crop_type'),
                             value: aiResult?.detectedCrop ?? 'N/A',
                           ),
                           _InfoRow(
-                            label: 'Disease Detected',
-                            value: aiResult?.disease?.diseaseName ?? 'N/A',
+                            label: t.get('disease_detected'),
+                            value:
+                                aiResult?.disease?.diseaseName ??
+                                t.get('natural_disaster'),
                           ),
                           _InfoRow(
-                            label: 'Confidence',
-                            value: aiResult != null
-                                ? '${(aiResult.disease!.confidence * 100).toStringAsFixed(0)}%'
+                            label: t.get('confidence'),
+                            value: aiResult?.disease != null
+                                ? '${(aiResult!.disease!.confidence * 100).toStringAsFixed(0)}%'
                                 : 'N/A',
                           ),
                           _InfoRow(
-                            label: 'Overall Field Loss',
+                            label: t.get('overall_loss'),
                             value: aiResult != null
                                 ? '${aiResult.damage.overallFieldLossPercentage.toStringAsFixed(1)}%'
                                 : 'N/A',
                           ),
                           _InfoRow(
-                            label: 'Images Captured',
+                            label: t.get('images_captured'),
                             value: '${appState.capturedImages.length}',
                           ),
                         ],
@@ -170,7 +183,7 @@ class ClaimReportScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Claim Calculation',
+                            t.get('claim_calculation'),
                             style: Theme.of(context).textTheme.headlineMedium
                                 ?.copyWith(
                                   color: pmfbyCalculation?.isEligible == true
@@ -180,7 +193,7 @@ class ClaimReportScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                           _InfoRow(
-                            label: 'Sum Insured',
+                            label: t.get('sum_insured'),
                             value: pmfbyCalculation != null
                                 ? currencyFormat.format(
                                     pmfbyCalculation.sumInsured,
@@ -188,7 +201,7 @@ class ClaimReportScreen extends StatelessWidget {
                                 : 'N/A',
                           ),
                           _InfoRow(
-                            label: 'Eligible Claim Amount',
+                            label: t.get('eligible_amount'),
                             value: pmfbyCalculation != null
                                 ? currencyFormat.format(
                                     pmfbyCalculation.eligibleClaimAmount,
@@ -197,10 +210,10 @@ class ClaimReportScreen extends StatelessWidget {
                             isBold: true,
                           ),
                           _InfoRow(
-                            label: 'Status',
+                            label: t.get('status_label'),
                             value: pmfbyCalculation?.isEligible == true
-                                ? 'ELIGIBLE'
-                                : 'NOT ELIGIBLE',
+                                ? t.get('eligible')
+                                : t.get('not_eligible'),
                             isBold: true,
                           ),
                         ],
@@ -217,7 +230,7 @@ class ClaimReportScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            'Verification Code',
+                            t.get('verification_code'),
                             style: Theme.of(context).textTheme.headlineMedium,
                           ),
                           const SizedBox(height: 16),
@@ -234,7 +247,7 @@ class ClaimReportScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Scan to verify claim authenticity',
+                            t.get('scan_verify'),
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ],
@@ -261,7 +274,7 @@ class ClaimReportScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Pradhan Mantri Fasal Bima Yojana',
+                                t.get('pmfby_full'),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey.shade700,
@@ -271,7 +284,7 @@ class ClaimReportScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Government of India • Ministry of Agriculture',
+                            t.get('govt_ministry'),
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.grey.shade600,
@@ -307,9 +320,9 @@ class ClaimReportScreen extends StatelessWidget {
                         _showDownloadMessage(context);
                       },
                       icon: const Icon(Icons.file_download, size: 22),
-                      label: const Text(
-                        'Download PDF',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                      label: Text(
+                        t.get('download_pdf'),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -322,7 +335,7 @@ class ClaimReportScreen extends StatelessWidget {
                   Expanded(
                     flex: 2,
                     child: CustomButton(
-                      text: 'Submit to Insurer',
+                      text: t.get('submit_insurer'),
                       icon: Icons.send,
                       onPressed: () => _submitClaim(context),
                     ),
@@ -345,11 +358,20 @@ class ClaimReportScreen extends StatelessWidget {
   void _showDownloadMessage(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Row(
+        content: Row(
           children: [
-            Icon(Icons.file_download, color: Colors.white),
-            SizedBox(width: 12),
-            Expanded(child: Text('PDF report download complete!')),
+            const Icon(Icons.file_download, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                AppLocalizations(
+                  Provider.of<LocaleProvider>(
+                    context,
+                    listen: false,
+                  ).languageCode,
+                ).get('pdf_complete'),
+              ),
+            ),
           ],
         ),
         backgroundColor: AppTheme.successColor,
@@ -364,20 +386,20 @@ class ClaimReportScreen extends StatelessWidget {
     final appState = Provider.of<AppState>(context, listen: false);
     appState.submitClaim();
 
+    final t = AppLocalizations(
+      Provider.of<LocaleProvider>(context, listen: false).languageCode,
+    );
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.check_circle, color: AppTheme.successColor),
-            SizedBox(width: 12),
-            Text('Claim Submitted'),
+            const Icon(Icons.check_circle, color: AppTheme.successColor),
+            const SizedBox(width: 12),
+            Text(t.get('claim_submitted')),
           ],
         ),
-        content: const Text(
-          'Your claim has been successfully submitted to the insurance company. '
-          'You will receive a confirmation message shortly.',
-        ),
+        content: Text(t.get('claim_submitted_msg')),
         actions: [
           TextButton(
             onPressed: () {
@@ -389,7 +411,7 @@ class ClaimReportScreen extends StatelessWidget {
                 (route) => false,
               );
             },
-            child: const Text('OK'),
+            child: Text(t.get('ok')),
           ),
         ],
       ),

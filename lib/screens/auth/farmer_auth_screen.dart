@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../models/auth_models.dart';
 import '../../providers/app_state.dart';
+import '../../providers/locale_provider.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/otp_input.dart';
@@ -28,8 +30,10 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
     return Scaffold(
-      appBar: AppBar(title: const Text('Farmer Verification')),
+      appBar: AppBar(title: Text(t.get('farmer_verification'))),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -38,9 +42,9 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const HeaderWidget(
-                  title: 'Farmer Verification',
-                  subtitle: 'किसान सत्यापन',
+                HeaderWidget(
+                  title: t.get('farmer_verification'),
+                  subtitle: t.get('farmer_desc'),
                 ),
 
                 const SizedBox(height: 32),
@@ -48,10 +52,10 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
                 // Mobile Number
                 TextFormField(
                   controller: _mobileController,
-                  decoration: const InputDecoration(
-                    labelText: 'Mobile Number / मोबाइल नंबर *',
-                    hintText: '10 digit mobile number',
-                    prefixIcon: Icon(Icons.phone, size: 28),
+                  decoration: InputDecoration(
+                    labelText: '${t.get('mobile_number')} *',
+                    hintText: t.get('mobile_hint'),
+                    prefixIcon: const Icon(Icons.phone, size: 28),
                   ),
                   keyboardType: TextInputType.phone,
                   maxLength: 10,
@@ -59,7 +63,7 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
                   style: const TextStyle(fontSize: 18),
                   validator: (value) {
                     if (value == null || value.length != 10) {
-                      return 'Please enter valid 10-digit mobile number';
+                      return t.get('valid_mobile');
                     }
                     return null;
                   },
@@ -70,10 +74,10 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
                 // Aadhaar Number
                 TextFormField(
                   controller: _aadhaarController,
-                  decoration: const InputDecoration(
-                    labelText: 'Aadhaar Number / आधार नंबर *',
-                    hintText: 'Full 12 digits or last 4 digits',
-                    prefixIcon: Icon(Icons.badge, size: 28),
+                  decoration: InputDecoration(
+                    labelText: '${t.get('aadhaar_number')} *',
+                    hintText: t.get('aadhaar_hint'),
+                    prefixIcon: const Icon(Icons.badge, size: 28),
                   ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -81,7 +85,7 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
                   validator: (value) {
                     if (value == null ||
                         (value.length != 12 && value.length != 4)) {
-                      return 'Enter full 12 digits or last 4 digits of Aadhaar';
+                      return t.get('enter_aadhaar');
                     }
                     return null;
                   },
@@ -92,10 +96,10 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
                 // Optional Policy ID
                 TextFormField(
                   controller: _policyIdController,
-                  decoration: const InputDecoration(
-                    labelText: 'PMFBY Policy ID (Optional)',
-                    hintText: 'Enter your policy ID if available',
-                    prefixIcon: Icon(Icons.policy, size: 28),
+                  decoration: InputDecoration(
+                    labelText: t.get('pmfby_policy_optional'),
+                    hintText: t.get('policy_hint'),
+                    prefixIcon: const Icon(Icons.policy, size: 28),
                   ),
                   style: const TextStyle(fontSize: 18),
                 ),
@@ -105,7 +109,7 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
                 // Send OTP Button
                 if (!_otpSent)
                   CustomButton(
-                    text: 'Send OTP / OTP भेजें',
+                    text: t.get('send_otp'),
                     icon: Icons.message,
                     onPressed: _sendOTP,
                     isEnabled: !_isLoading,
@@ -114,8 +118,8 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
                 // OTP Input
                 if (_otpSent) ...[
                   const SizedBox(height: 24),
-                  const Text(
-                    'Enter OTP / OTP दर्ज करें',
+                  Text(
+                    t.get('enter_otp'),
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -129,7 +133,7 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
                   const SizedBox(height: 12),
                   Center(
                     child: Text(
-                      'For demo: Use 123456',
+                      t.get('demo_otp_hint'),
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade600,
@@ -152,7 +156,7 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Your information is secured and used only for claim processing',
+                            t.get('info_secured'),
                             style: TextStyle(
                               color: Colors.green.shade900,
                               fontSize: 13,
@@ -168,7 +172,7 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
 
                 // Verify Button
                 CustomButton(
-                  text: 'Verify & Continue / सत्यापित करें',
+                  text: t.get('verify_continue'),
                   icon: Icons.check_circle,
                   onPressed: _verifyAndContinue,
                   isEnabled: _otpSent && _otp.isNotEmpty && !_isLoading,
@@ -192,6 +196,9 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
 
     final success = await AuthService.sendOTP(_mobileController.text);
 
+    final locale = Provider.of<LocaleProvider>(context, listen: false);
+    final t = AppLocalizations(locale.languageCode);
+
     setState(() {
       _isLoading = false;
       if (success) {
@@ -201,15 +208,15 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('OTP sent successfully!'),
+        SnackBar(
+          content: Text(t.get('otp_sent')),
           backgroundColor: AppTheme.successColor,
         ),
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to send OTP'),
+        SnackBar(
+          content: Text(t.get('otp_failed')),
           backgroundColor: AppTheme.errorColor,
         ),
       );
@@ -220,6 +227,9 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+
+    final locale = Provider.of<LocaleProvider>(context, listen: false);
+    final t = AppLocalizations(locale.languageCode);
 
     setState(() {
       _isLoading = true;
@@ -234,8 +244,8 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid OTP. Please try again.'),
+          SnackBar(
+            content: Text(t.get('invalid_otp')),
             backgroundColor: AppTheme.errorColor,
           ),
         );
@@ -250,8 +260,8 @@ class _FarmerAuthScreenState extends State<FarmerAuthScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid Aadhaar number'),
+          SnackBar(
+            content: Text(t.get('invalid_aadhaar')),
             backgroundColor: AppTheme.errorColor,
           ),
         );

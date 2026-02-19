@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
+import '../models/damage_type.dart';
 import '../services/ai_service.dart';
 import '../theme/app_theme.dart';
 
@@ -16,13 +19,6 @@ class _AIProcessingScreenState extends State<AIProcessingScreen>
   late AnimationController _animationController;
   int _currentStep = 0;
 
-  final List<String> _processingSteps = [
-    'Detecting crop...',
-    'Identifying disease...',
-    'Calculating damage percentage...',
-    'Applying PMFBY rules...',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -36,9 +32,18 @@ class _AIProcessingScreenState extends State<AIProcessingScreen>
 
   void _startProcessing() async {
     final appState = Provider.of<AppState>(context, listen: false);
+    final locale = Provider.of<LocaleProvider>(context, listen: false);
+    final t = AppLocalizations(locale.languageCode);
+
+    final processingSteps = [
+      t.get('detecting_crop'),
+      appState.claimData.damageType.getLocalizedProcessingText(t),
+      t.get('calc_damage'),
+      t.get('applying_rules'),
+    ];
 
     // Animate through steps
-    for (int i = 0; i < _processingSteps.length; i++) {
+    for (int i = 0; i < processingSteps.length; i++) {
       await Future.delayed(const Duration(milliseconds: 1500));
       if (mounted) {
         setState(() {
@@ -65,6 +70,15 @@ class _AIProcessingScreenState extends State<AIProcessingScreen>
 
   @override
   Widget build(BuildContext context) {
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
+    final processingSteps = [
+      t.get('detecting_crop'),
+      t.get('identifying_disease'),
+      t.get('calc_damage'),
+      t.get('applying_rules'),
+    ];
+
     return Scaffold(
       backgroundColor: AppTheme.primaryDark,
       body: SafeArea(
@@ -118,9 +132,9 @@ class _AIProcessingScreenState extends State<AIProcessingScreen>
               const SizedBox(height: 48),
 
               // Current step indicator
-              const Text(
-                'Processing...',
-                style: TextStyle(
+              Text(
+                t.get('processing'),
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -130,9 +144,8 @@ class _AIProcessingScreenState extends State<AIProcessingScreen>
               const SizedBox(height: 32),
 
               // Processing steps
-              ..._processingSteps.asMap().entries.map((entry) {
-                final index = entry.key;
-                final step = entry.value;
+              ...List.generate(processingSteps.length, (index) {
+                final step = processingSteps[index];
                 final isComplete = index < _currentStep;
                 final isCurrent = index == _currentStep;
 
@@ -190,15 +203,15 @@ class _AIProcessingScreenState extends State<AIProcessingScreen>
                     ],
                   ),
                 );
-              }).toList(),
+              }),
 
               const SizedBox(height: 48),
 
               // Info text
               Text(
-                'Please wait while we analyze your field images',
+                t.get('wait_analyzing'),
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70, fontSize: 14),
+                style: const TextStyle(color: Colors.white70, fontSize: 14),
               ),
             ],
           ),

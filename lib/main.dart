@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_state.dart';
+import 'providers/locale_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
+import 'screens/language_selection_screen.dart';
 import 'screens/mode_selection_screen.dart';
 import 'screens/auth/farmer_auth_screen.dart';
 import 'screens/auth/operator_auth_screen.dart';
@@ -21,18 +23,31 @@ import 'screens/manage_requests_screen.dart';
 import 'guards/auth_guard.dart';
 import 'guards/role_guard.dart';
 import 'models/user_mode.dart';
+import 'services/supabase_service.dart';
 
-void main() {
-  runApp(const CropClaimApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SupabaseService.initialize();
+
+  // Load saved language preference
+  final localeProvider = LocaleProvider();
+  await localeProvider.loadSavedLocale();
+
+  runApp(CropClaimApp(localeProvider: localeProvider));
 }
 
 class CropClaimApp extends StatelessWidget {
-  const CropClaimApp({super.key});
+  final LocaleProvider localeProvider;
+
+  const CropClaimApp({super.key, required this.localeProvider});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AppState(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AppState()),
+        ChangeNotifierProvider.value(value: localeProvider),
+      ],
       child: MaterialApp(
         title: 'CropClaim AI',
         debugShowCheckedModeBanner: false,
@@ -40,6 +55,7 @@ class CropClaimApp extends StatelessWidget {
         initialRoute: '/',
         routes: {
           '/': (context) => const SplashScreen(),
+          '/language': (context) => const LanguageSelectionScreen(),
           '/mode-selection': (context) => const ModeSelectionScreen(),
           '/auth/farmer': (context) => const FarmerAuthScreen(),
           '/auth/operator': (context) => const OperatorAuthScreen(),

@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:provider/provider.dart';
 import '../models/claim_data.dart';
+import '../models/damage_type.dart';
 import '../providers/app_state.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
+import '../services/camera_service.dart';
 import '../services/gps_service.dart';
+import '../services/image_watermark_service.dart';
+import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/mock_field_view.dart';
+import '../widgets/camera_preview.dart';
 
 class GuidedCaptureScreen extends StatefulWidget {
   const GuidedCaptureScreen({super.key});
@@ -16,11 +23,14 @@ class GuidedCaptureScreen extends StatefulWidget {
 class _GuidedCaptureScreenState extends State<GuidedCaptureScreen> {
   bool _gpsLocked = true;
   bool _canCapture = true;
-  String _instruction = 'Move closer to crop';
+  bool _showFlash = false;
+  String _instruction = ''; // Will be set in build/effect
 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final locale = Provider.of<LocaleProvider>(context);
+    final t = AppLocalizations(locale.languageCode);
     final captureCount = appState.capturedImages.length;
     final requiredCount = appState.requiredCaptureCount;
     final progress = captureCount / requiredCount;
@@ -30,8 +40,14 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Mock camera view with realistic field simulation
-            const MockFieldView(),
+            // Real camera preview (falls back to mock on emulator)
+            const CameraPreviewWidget(),
+
+            // Flash overlay for capture feedback
+            if (_showFlash)
+              Positioned.fill(
+                child: Container(color: Colors.white.withOpacity(0.7)),
+              ),
 
             // Top overlay - instructions and stats
             Positioned(
@@ -60,7 +76,7 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        appState.claimData.damageType.captureGuidance,
+                        appState.claimData.damageType.getLocalizedGuidance(t),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -88,7 +104,9 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen> {
                           icon: _gpsLocked
                               ? Icons.gps_fixed
                               : Icons.gps_not_fixed,
-                          label: _gpsLocked ? 'GPS Locked' : 'GPS Searching',
+                          label: _gpsLocked
+                              ? t.get('gps_locked')
+                              : t.get('gps_searching'),
                           color: _gpsLocked
                               ? AppTheme.successColor
                               : AppTheme.warningColor,
@@ -140,9 +158,12 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen> {
                         color: Colors.black.withOpacity(0.6),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
-                        'Ensure crop fills the frame',
-                        style: TextStyle(color: Colors.white, fontSize: 12),
+                      child: Text(
+                        t.get('ensure_crop_frame'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -232,22 +253,22 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen> {
 
   void _captureImage() async {
     final appState = Provider.of<AppState>(context, listen: false);
+    final locale = Provider.of<LocaleProvider>(context, listen: false);
+    final t = AppLocalizations(locale.languageCode);
 
-    // Mock capture location
-    final location = GPSService.getMockLocation();
+    // Get real GPS location (real on mobile, mock on web)
+    final location = await GPSService.getCurrentLocation();
 
     // Check if location is valid (fraud prevention)
     if (!GPSService.isValidCaptureLocation(location, appState.capturedImages)) {
       setState(() {
         _canCapture = false;
-        _instruction = 'Move further from last capture point';
+        _instruction = t.get('move_further_msg');
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Capture too close to previous point. Please move at least 20 meters.',
-          ),
+        SnackBar(
+          content: Text(t.get('too_close')),
           backgroundColor: AppTheme.errorColor,
         ),
       );
@@ -257,35 +278,100 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen> {
         if (mounted) {
           setState(() {
             _canCapture = true;
-            _instruction = 'Move closer to crop';
+            _instruction = t.get('move_closer');
           });
         }
       });
       return;
     }
 
-    // Add capture
+    // Flash effect
+    setState(() {
+      _showFlash = true;
+      _canCapture = false;
+      _instruction = t.get('processing');
+    });
+
+    final now = DateTime.now();
+    final captureIndex = appState.capturedImages.length + 1;
+    final claimId =
+        'CLM_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.millisecondsSinceEpoch}';
+
+    // Try real camera capture, fall back to mock path
+    String imagePath;
+    final realPath = await CameraService.instance.takePicture();
+    if (realPath != null) {
+      // Apply GPS watermark and save to dedicated folder
+      imagePath = await ImageWatermarkService.watermarkAndSave(
+        imagePath: realPath,
+        location: location,
+        timestamp: now,
+        captureIndex: captureIndex,
+        claimId: claimId,
+      );
+    } else {
+      // Fallback for emulator/desktop/web
+      imagePath = 'mock_image_$captureIndex.jpg';
+    }
+
+    // Upload image to Supabase Storage
+    String finalPath = imagePath;
+    final uploadUrl = await SupabaseService.uploadImage(
+      filePath: imagePath,
+      claimId: claimId,
+      captureIndex: captureIndex,
+    );
+    if (uploadUrl != null) {
+      finalPath = uploadUrl; // Use cloud URL
+    }
+
+    // Add capture metadata (with cloud URL if available)
     final metadata = CaptureMetadata(
-      imagePath: 'mock_image_${appState.capturedImages.length + 1}.jpg',
+      imagePath: finalPath,
       location: location,
-      timestamp: DateTime.now(),
-      captureIndex: appState.capturedImages.length + 1,
+      timestamp: now,
+      captureIndex: captureIndex,
     );
 
     appState.addCapturedImage(metadata);
 
-    // Flash effect
-    setState(() {
-      _instruction = 'Photo captured!';
-    });
-
-    await Future.delayed(const Duration(milliseconds: 300));
-
+    // End flash
+    await Future.delayed(const Duration(milliseconds: 150));
     if (mounted) {
       setState(() {
-        _instruction = 'Move to next location';
+        _showFlash = false;
+        _instruction =
+            '${t.get('photo_captured')} | ${t.get('gps_status')}: ${location.latitude.toStringAsFixed(4)}, ${location.longitude.toStringAsFixed(4)}';
+      });
+
+      // Show upload status
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            uploadUrl != null
+                ? '✅ ${t.get('photo_uploaded')} ($captureIndex)'
+                : '⚠️ ${t.get('photo_local')} - ${SupabaseService.lastUploadStatus}',
+          ),
+          backgroundColor: uploadUrl != null ? Colors.green : Colors.orange,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+
+    await Future.delayed(const Duration(milliseconds: 800));
+    if (mounted) {
+      setState(() {
+        _canCapture = true;
+        _instruction = t.get('move_next_location');
       });
     }
+  }
+
+  @override
+  void dispose() {
+    // Dispose the camera when leaving this screen
+    CameraService.instance.dispose();
+    super.dispose();
   }
 }
 
