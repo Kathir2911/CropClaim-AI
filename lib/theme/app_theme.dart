@@ -26,6 +26,16 @@ class AppTheme {
       primaryColor: primaryColor,
       scaffoldBackgroundColor: backgroundColor,
       cardColor: cardColor,
+      fontFamily: GoogleFonts.notoSans().fontFamily,
+      fontFamilyFallback: [
+        GoogleFonts.notoSans().fontFamily!,
+        GoogleFonts.notoSansTamil().fontFamily!,
+        GoogleFonts.notoSansTelugu().fontFamily!,
+        GoogleFonts.notoSansDevanagari().fontFamily!,
+        GoogleFonts.notoSansBengali().fontFamily!,
+        GoogleFonts.notoSansKannada().fontFamily!,
+        GoogleFonts.notoSansMalayalam().fontFamily!,
+      ],
       colorScheme: const ColorScheme.light(
         primary: primaryColor,
         secondary: accentColor,
@@ -33,36 +43,36 @@ class AppTheme {
         error: errorColor,
       ),
 
-      // Typography - simple and readable
-      textTheme: TextTheme(
-        displayLarge: GoogleFonts.roboto(
+      // Typography - using Noto Sans for full multilingual support
+      textTheme: GoogleFonts.notoSansTextTheme(TextTheme(
+        displayLarge: GoogleFonts.notoSans(
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: textPrimary,
         ),
-        displayMedium: GoogleFonts.roboto(
+        displayMedium: GoogleFonts.notoSans(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: textPrimary,
         ),
-        displaySmall: GoogleFonts.roboto(
+        displaySmall: GoogleFonts.notoSans(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
-        headlineMedium: GoogleFonts.roboto(
+        headlineMedium: GoogleFonts.notoSans(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
-        titleLarge: GoogleFonts.roboto(
+        titleLarge: GoogleFonts.notoSans(
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: textPrimary,
         ),
-        bodyLarge: GoogleFonts.roboto(fontSize: 16, color: textPrimary),
-        bodyMedium: GoogleFonts.roboto(fontSize: 14, color: textSecondary),
-      ),
+        bodyLarge: GoogleFonts.notoSans(fontSize: 16, color: textPrimary),
+        bodyMedium: GoogleFonts.notoSans(fontSize: 14, color: textSecondary),
+      )),
 
       // Elevated button theme - government style
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -72,7 +82,7 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: 2,
-          textStyle: GoogleFonts.roboto(
+          textStyle: GoogleFonts.notoSans(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -112,7 +122,7 @@ class AppTheme {
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         elevation: 2,
-        titleTextStyle: GoogleFonts.roboto(
+        titleTextStyle: GoogleFonts.notoSans(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: Colors.white,

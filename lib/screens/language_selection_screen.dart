@@ -123,7 +123,13 @@ class _LanguageTile extends StatelessWidget {
         onTap: () async {
           await localeProvider.setLocale(code);
           if (context.mounted) {
-            Navigator.pushReplacementNamed(context, '/mode-selection');
+            if (Navigator.canPop(context)) {
+              // Accessed from settings/profile - just go back
+              Navigator.pop(context);
+            } else {
+              // Initial launch - proceed to mode selection
+              Navigator.pushReplacementNamed(context, '/mode-selection');
+            }
           }
         },
         borderRadius: BorderRadius.circular(16),
